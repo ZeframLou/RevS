@@ -67,7 +67,7 @@
         if (ttl > 0) {
             if ([[RSUtilities listOfFilenames]containsObject:fileName]) {
                 //Ooh,you have the file!First,send a message to the sender to increase the probability index on this path
-                NSString *incIndexMessageString = [NSString stringWithFormat:@"INC_%d;%@;%@",INDEX_INC,[RSUtilities getLocalIPAddress],fileName];
+                NSString *incIndexMessageString = [NSString stringWithFormat:@"INC_%ld;%@;%@",(unsigned long)INDEX_INC,[RSUtilities getLocalIPAddress],fileName];
                 RSMessager *incIndexMessage = [RSMessager messagerWithPort:DOWNLOAD_PORT];
                 [incIndexMessage addDelegate:self];
                 [incIndexMessage sendTcpMessage:incIndexMessageString toHost:senderIP tag:0];
@@ -122,7 +122,7 @@
         NSString *recieverIP = [[NSUserDefaults standardUserDefaults]objectForKey:senderKey];
         [[NSUserDefaults standardUserDefaults]removeObjectForKey:senderKey];
         if (recieverIP) {
-            NSString *incIndexMessageString = [NSString stringWithFormat:@"INC_%d;%@;%@",INDEX_INC,[RSUtilities getLocalIPAddress],fileName];
+            NSString *incIndexMessageString = [NSString stringWithFormat:@"INC_%ld;%@;%@",(unsigned long)INDEX_INC,[RSUtilities getLocalIPAddress],fileName];
             RSMessager *incIndexMessage = [RSMessager messagerWithPort:DOWNLOAD_PORT];
             [incIndexMessage addDelegate:self];
             [incIndexMessage sendTcpMessage:messageString toHost:recieverIP tag:0];
@@ -130,16 +130,32 @@
     }
     else if ([messageType isEqualToString:@"JOIN"]) {
         NSString *ipAddress = [messageArguments objectAtIndex:0];
-        NSMutableArray *ipList = [NSMutableArray arrayWithArray:[RSUtilities localIpList]];
-        [ipList removeObject:ipAddress];
-        NSString *ipListString = [ipList componentsJoinedByString:@","];
+        NSString *dataString = [NSData decryptData:[NSData dataWithContentsOfFile:IP_LIST_PATH] withKey:CODE];
+        NSMutableArray *dataArray = [NSMutableArray arrayWithArray:[dataString componentsSeparatedByString:@";"]];
+        for (NSString *string in dataArray) {
+            NSArray *array = [string componentsSeparatedByString:@","];
+            NSString *ip = [array objectAtIndex:0];
+            if ([ipAddress isEqualToString:ip]) {
+                NSString *newDataString = [NSString stringWithFormat:@"%@,1",ip];
+                [dataArray replaceObjectAtIndex:[dataArray indexOfObject:string] withObject:newDataString];
+            }
+        }
+        NSString *ipListString = [dataArray componentsJoinedByString:@";"];
         [[NSData encryptString:ipListString withKey:CODE]writeToFile:IP_LIST_PATH atomically:YES];
     }
     else if ([messageType isEqualToString:@"QUIT"]) {
         NSString *ipAddress = [messageArguments objectAtIndex:0];
-        NSMutableArray *ipList = [NSMutableArray arrayWithArray:[RSUtilities localIpList]];
-        [ipList addObject:ipAddress];
-        NSString *ipListString = [ipList componentsJoinedByString:@","];
+        NSString *dataString = [NSData decryptData:[NSData dataWithContentsOfFile:IP_LIST_PATH] withKey:CODE];
+        NSMutableArray *dataArray = [NSMutableArray arrayWithArray:[dataString componentsSeparatedByString:@";"]];
+        for (NSString *string in dataArray) {
+            NSArray *array = [string componentsSeparatedByString:@","];
+            NSString *ip = [array objectAtIndex:0];
+            if ([ipAddress isEqualToString:ip]) {
+                NSString *newDataString = [NSString stringWithFormat:@"%@,0",ip];
+                [dataArray replaceObjectAtIndex:[dataArray indexOfObject:string] withObject:newDataString];
+            }
+        }
+        NSString *ipListString = [dataArray componentsJoinedByString:@";"];
         [[NSData encryptString:ipListString withKey:CODE]writeToFile:IP_LIST_PATH atomically:YES];
     }
     else if ([messageType isEqualToString:@"HASFILE"])
@@ -211,7 +227,7 @@
         [data writeToFile:[NSString stringWithFormat:@"%@%@",STORED_DATA_DIRECTORY,fileName] atomically:YES];
         
         if (timeToLive > 0) {
-            NSArray *contactList = [RSUtilities localIpList];
+            NSArray *contactList = [RSUtilities contactListWithKValue:K_NEIGHBOUR];
             for (NSUInteger i = 0; i < K_NEIGHBOUR; i++) {
                 if (i < contactList.count && ![[contactList objectAtIndex:i] isEqualToString:uploaderIP]) {
                     NSString *messageString = [NSString stringWithFormat:@"UFILE_%@;%@;%ld",fileName,[RSUtilities getLocalIPAddress],(unsigned long)timeToLive];

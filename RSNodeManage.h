@@ -25,10 +25,23 @@
 
 #import <Foundation/Foundation.h>
 
+/*
+  This class implements the basic network functions,like joining and leaving the network.
+*/
+
 @interface RSNodeManage : NSObject
 
+/*
+ Returns a static RSNodeManage object.
+*/
 + (RSNodeManage *)sharedInstance;
+/*
+  Sends a message to all the neighbours to tell them that this device is online.If the address of the device is not recorded on the server,send a message to the server too.
+*/
 - (void)join;
+/*
+  Sends a message to all the neighbours to tell them that this device is offline.
+*/
 - (void)quit;
 
 @end

@@ -32,38 +32,51 @@
 
 @implementation RSUtilities
 
-@synthesize delegate;
-
 + (NSArray *)localIpList
 {
     NSData *data = [NSData dataWithContentsOfFile:IP_LIST_PATH];
     NSString *string = [NSData decryptData:data withKey:CODE];
-    NSArray *ipArray;
+    NSMutableArray *ipArray = [NSMutableArray array];
+    NSArray *dataArray;
     if (string.length > 0) {
-        ipArray = [string componentsSeparatedByString:@","];
+        dataArray = [string componentsSeparatedByString:@";"];
+        for (NSString *dataString in dataArray) {
+            NSArray *array = [dataString componentsSeparatedByString:@","];
+            NSString *ipAddress = [array objectAtIndex:0];
+            [ipArray addObject:ipAddress];
+        }
     }
     return ipArray;
 }
 
-- (void)remoteIpList
++ (NSArray *)onlineNeighbours
 {
-    RSMessager *message = [RSMessager messagerWithPort:MESSAGE_PORT];
-    [message addDelegate:self];
-    [message sendTcpMessage:@"IPLIST" toHost:SERVER_IP tag:0];
-}
-
-- (void)remoteIpListInString
-{
-    RSMessager *message = [RSMessager messagerWithPort:MESSAGE_PORT];
-    [message addDelegate:self];
-    [message sendTcpMessage:@"IPLIST" toHost:SERVER_IP tag:1];
+    NSData *data = [NSData dataWithContentsOfFile:IP_LIST_PATH];
+    NSString *string = [NSData decryptData:data withKey:CODE];
+    NSMutableArray *neighbourArray = [NSMutableArray array];
+    NSArray *dataArray;
+    if (string.length > 0) {
+        dataArray = [string componentsSeparatedByString:@";"];
+        for (NSString *dataString in dataArray) {
+            NSArray *array = [dataString componentsSeparatedByString:@","];
+            NSString *ipAddress = [array objectAtIndex:0];
+            BOOL isOnline = [[array objectAtIndex:1] integerValue];
+            if (isOnline) {
+                [neighbourArray addObject:ipAddress];
+            }
+        }
+    }
+    return neighbourArray;
 }
 
 + (NSArray *)contactListWithKValue:(NSUInteger)k
 {
-    NSArray *ipList = [RSUtilities localIpList];
+    NSArray *ipList = [RSUtilities onlineNeighbours];
     
-    //Get the online neighbors and the coresponding probability index value
+    if (k > ipList.count) {
+        k = ipList.count;
+    }
+    //Get the online neighbours and the coresponding probability index value
     NSString *dataString = [NSData decryptData:[NSData dataWithContentsOfFile:PROB_INDEX_PATH] withKey:CODE];
     NSMutableArray *dataArray = [NSMutableArray arrayWithArray:[dataString componentsSeparatedByString:@","]];
     
@@ -78,12 +91,17 @@
             [probIndexList addObject:probIndex];
         }
     }
-    //Get the neighbors with the highest probability value
+    //Get the neighbours with the highest probability value
     NSMutableArray *contactList = [NSMutableArray array];
-    NSNumber *max = [probIndexList valueForKeyPath:@"@max.intValue"];
-    for (NSNumber *number in probIndexList) {
-        if ([number isEqualToNumber:max] && contactList.count < k) {
-            [contactList addObject:[probIndexContactList objectAtIndex:[probIndexList indexOfObject:number]]];
+    NSArray *sortedIndexList = [probIndexList sortedArrayUsingSelector:@selector(compare:)];
+    //sortedIndexList is the sorted version of probIndexList in an ascending order.
+    NSArray *indexList = [sortedIndexList subarrayWithRange:NSMakeRange(sortedIndexList.count - k, k)];
+    for (NSUInteger i = 0; i < dataArray.count; i++) {
+        if (contactList.count == k) {
+            break;
+        }
+        if ([indexList containsObject:[probIndexList objectAtIndex:i]]) {
+            [contactList addObject:[probIndexContactList objectAtIndex:i]];
         }
     }
     
@@ -146,25 +164,6 @@
 {
     NSArray *fileList = [[NSFileManager defaultManager]contentsOfDirectoryAtPath:STORED_DATA_DIRECTORY error:nil];
     return fileList;
-}
-
-#pragma mark - RSMessageDelegate
-
-- (void)messager:(RSMessager *)messager didRecieveData:(NSData *)data tag:(NSInteger)tag;
-{
-    NSString *messageString = [NSData decryptData:data withKey:CODE];
-    NSString *messageType = [[messageString componentsSeparatedByString:@"_"]objectAtIndex:0];
-    NSArray *messageArguments = [[[messageString componentsSeparatedByString:@"_"]lastObject]componentsSeparatedByString:@";"];
-    if ([messageType isEqualToString:@"IPL"]) {
-        NSString *listString = [messageArguments lastObject];
-        if (tag == 0) {
-            NSArray *ipArray = [listString componentsSeparatedByString:@","];
-            [delegate didRecieveRemoteIPList:ipArray];
-        }
-        else if (tag == 1) {
-            [delegate didRecieveRemoteIPList:listString];
-        }
-    }
 }
 
 @end

@@ -35,8 +35,18 @@
 
 @interface RSUpload : NSObject
 
+/*
+  Returns a static RSUpload Object.
+*/
 + (RSUpload *)sharedInstance;
+/*
+  Tell the neighbours to download the file from the sender,and pass it on untill the TTL value becomes zero.
+*/
 + (void)uploadFile:(NSString *)fileName;
+/*
+  Send a file to a specific host.
+*/
++ (void)uploadFile:(NSString *)fileName toHost:(NSString *)host;
 - (void)addDelegate:(id <RSUploadDelegate>)delegate;
 
 @end

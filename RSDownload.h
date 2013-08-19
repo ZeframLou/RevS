@@ -29,8 +29,17 @@
 
 @interface RSDownload : NSObject
 
+/*
+  Returns a static RSDownload object.
+*/
 + (RSDownload *)sharedInstance;
+/*
+  Start a search query,if the file is found,then download the file.
+*/
 - (void)downloadFile:(NSString *)fileName;
+/*
+  Download a file from a specific address.
+*/
 - (void)downloadFile:(NSString *)fileName fromIP:(NSString *)ipAddress;
 - (void)addDelegate:(id <RSDownloadDelegate>)delegate;
 
@@ -40,6 +49,9 @@
 
 @optional
 
+/*
+  Called after a file is downloaded.
+*/
 - (void)didDownloadFile:(NSString *)fileName;
 
 @end

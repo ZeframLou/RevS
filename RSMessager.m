@@ -41,14 +41,14 @@
 
 + (RSMessager *)messagerWithPort:(uint16_t)port
 {
-    static RSMessager *messager;
-    if (!messager) {
-        messager = [[RSMessager alloc]init];
+    //static RSMessager *messager;
+    //if (!messager) {
+        RSMessager *messager = [[RSMessager alloc]init];
         messager.delegates = [NSMutableArray array];
         messager.tcpSocket = [[GCDAsyncSocket alloc]initWithDelegate:messager delegateQueue:[RSMessager delegateQueue]];
         [messager.tcpSocket acceptOnPort:port error:nil];
         messager.port = port;
-    }
+    //}
     return messager;
 }
 
@@ -66,7 +66,7 @@
     }
     else
     {
-        [tcpSocket writeData:[NSData encryptString:tcpMessage withKey:CODE] withTimeout:30 tag:0];
+        [tcpSocket writeData:[NSData encryptString:tcpMessage withKey:CODE] withTimeout:30 tag:tag];
     }
 }
 
@@ -97,7 +97,7 @@
 
 - (void)socket:(GCDAsyncSocket *)sock didConnectToHost:(NSString *)host port:(uint16_t)port
 {
-    [sock writeData:[NSData encryptString:tcpMessage withKey:CODE] withTimeout:30 tag:0];
+    [sock writeData:[NSData encryptString:tcpMessage withKey:CODE] withTimeout:30 tag:tag];
 }
 
 - (void)socket:(GCDAsyncSocket *)sock didAcceptNewSocket:(GCDAsyncSocket *)newSocket

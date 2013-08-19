@@ -48,7 +48,7 @@
 
 + (void)uploadFile:(NSString *)fileName
 {
-    NSArray *contactList = [RSUtilities localIpList];
+    NSArray *contactList = [RSUtilities onlineNeighbours];
     
     for (NSUInteger i = 0; i < K_NEIGHBOUR; i++) {
         if (i < contactList.count) {

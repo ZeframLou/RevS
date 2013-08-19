@@ -26,31 +26,40 @@
 #import <Foundation/Foundation.h>
 #import <CommonCrypto/CommonDigest.h>
 
+/*
+  This class implements all kinds of utility methods.
+*/
+
 @protocol RSIPListDelegate;
 
 @interface RSUtilities : NSObject
 
+/*
+  Returns the addresses of all the neighbours.
+*/
 + (NSArray *)localIpList;
+/*
+  Only returns the online neighbours' addresses.
+*/
++ (NSArray *)onlineNeighbours;
 
-- (void)remoteIpList;
-- (void)remoteIpListInString;
-
+/*
+  Returns the neighbours with the highest probability value.The "k" value is the count of the addresses you want.
+*/
 + (NSArray *)contactListWithKValue:(NSUInteger)k;
-
+/*
+  Returns the external IP address of the current device.
+*/
 + (NSString *)getLocalIPAddress;
 
+/*
+  Returns the SHA-1 hash from the given string.
+*/
 + (NSString *)hashFromString:(NSString *)string;
 //+ (NSArray *)listOfHashedFilenames;
+/*
+  Returns a list of all the files under the "STORED_DATA_DIRECTORY" defined in RSConstants.h
+*/
 + (NSArray *)listOfFilenames;
-
-@property (nonatomic,strong) id <RSIPListDelegate> delegate;
-
-@end
-
-@protocol RSIPListDelegate <NSObject>
-
-@optional
-
-- (void)didRecieveRemoteIPList:(id)list;
 
 @end

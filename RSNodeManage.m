@@ -24,7 +24,7 @@
 
 #import "RevS.h"
 
-@interface RSNodeManage () <RSIPListDelegate,RSMessagerDelegate>
+@interface RSNodeManage () <RSMessagerDelegate>
 
 @end
 
@@ -41,14 +41,13 @@
 
 - (void)downloadIPList
 {
-    RSUtilities *obj = [[RSUtilities alloc]init];
-    obj.delegate = self;
-    [obj remoteIpListInString];
+    RSMessager *message = [RSMessager messagerWithPort:MESSAGE_PORT];
+    [message addDelegate:self];
+    [message sendTcpMessage:@"IPLIST" toHost:SERVER_IP tag:0];
 }
 
 - (void)join
 {
-    //[[RSListener sharedListener]start];
     NSArray *localIPList = [RSUtilities localIpList];
     if (localIPList.count == 0) {
         [self downloadIPList];
@@ -81,7 +80,7 @@
         NSMutableArray *probArray = [NSMutableArray array];
         for (NSUInteger i = 0; i < NEIGHBOUR_COUNT; i++) {
             if (i < [RSUtilities localIpList].count) {
-                [probArray addObject:[NSString stringWithFormat:@"%@:%d",[[RSUtilities localIpList]objectAtIndex:i],INITIAL_PROB_INDEX]];
+                [probArray addObject:[NSString stringWithFormat:@"%@:%ld",[[RSUtilities localIpList]objectAtIndex:i],(unsigned long)INITIAL_PROB_INDEX]];
             }
         }
         NSString *probIndexString = [probArray componentsJoinedByString:@","];
@@ -90,19 +89,29 @@
     }
 }
 
-#pragma mark - RSIPListDelegate
+#pragma mark - RSMessageDelegate
 
-- (void)didRecieveRemoteIPList:(id)list
+- (void)messager:(RSMessager *)messager didRecieveData:(NSData *)data tag:(NSInteger)tag;
 {
-    if ([list isMemberOfClass:[NSString class]]) {
-        NSData *encryptedList = [NSData encryptString:list withKey:CODE];
+    NSString *messageString = [NSData decryptData:data withKey:CODE];
+    NSString *messageType = [[messageString componentsSeparatedByString:@"_"]objectAtIndex:0];
+    NSArray *messageArguments = [[[messageString componentsSeparatedByString:@"_"]lastObject]componentsSeparatedByString:@";"];
+    if ([messageType isEqualToString:@"IPL"]) {
+        NSString *listString = [messageArguments lastObject];
+        //The ip list is formatted like this:
+        //Address1,isOnline;Address2,isOnline;Address3,isOnline...
+        //"isOnline"is a BOOL value.
+        NSData *encryptedList = [NSData encryptString:listString withKey:CODE];
         [encryptedList writeToFile:IP_LIST_PATH atomically:YES];
-        NSArray *ipList = [list componentsSeparatedByString:@","];
+        NSArray *ipList = [RSUtilities localIpList];
         for (NSString *ip in ipList) {
             RSMessager *message = [RSMessager messagerWithPort:MESSAGE_PORT];
             [message addDelegate:self];
             [message sendTcpMessage:[NSString stringWithFormat:@"JOIN_%@",[RSUtilities getLocalIPAddress]] toHost:ip tag:0];
         }
+        RSMessager *message = [RSMessager messagerWithPort:MESSAGE_PORT];
+        [message addDelegate:self];
+        [message sendTcpMessage:[NSString stringWithFormat:@"JOIN_%@",[RSUtilities getLocalIPAddress]] toHost:SERVER_IP tag:0];
         [self initFiles];
     }
 }

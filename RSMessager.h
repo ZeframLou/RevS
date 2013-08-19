@@ -25,11 +25,21 @@
 
 #import <Foundation/Foundation.h>
 
+/*
+  This class allows you to send and recieve messages.
+*/
+
 @protocol RSMessagerDelegate;
 
 @interface RSMessager : NSObject
 
+/*
+  Initializes a RSMessager object with the given port.
+*/
 + (RSMessager *)messagerWithPort:(uint16_t)port;
+/*
+  Send a tcp message to the specified host.The tag argument is for your own convenience,you can use it as an array index,identifier,etc.
+*/
 - (void)sendTcpMessage:(NSString *)message toHost:(NSString *)host tag:(NSInteger)tag;
 - (void)addDelegate:(id <RSMessagerDelegate>)delegate;
 
@@ -39,7 +49,13 @@
 
 @optional
 
+/*
+  Called when the messager recieved data.The tag argument is for your own convenience,you can use it as an array index,identifier,etc.
+*/
 - (void)messager:(RSMessager *)messager didRecieveData:(NSData *)data tag:(NSInteger)tag;
+/*
+  Called when the messager wrote data on a remote storage.The tag argument is for your own convenience,you can use it as an array index,identifier,etc.
+*/
 - (void)messager:(RSMessager *)messager didWriteDataWithTag:(NSInteger)tag;
 
 @end
