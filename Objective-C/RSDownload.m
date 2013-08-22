@@ -52,6 +52,7 @@
 - (void)downloadFile:(NSString *)fileName;
 {
     NSArray *contactList = [RSUtilities contactListWithKValue:K];
+    [[NSUserDefaults standardUserDefaults]removeObjectForKey:[NSString stringWithFormat:@"%@:gotAHit",fileName]];
     //Send search query
     for (NSString *ipAddress in contactList) {
         NSString *messageString = [NSString stringWithFormat:@"S_%@;%@;%@;%ld",[RSUtilities getLocalIPAddress],[RSUtilities getLocalIPAddress],fileName,(unsigned long)TTL];

@@ -48,9 +48,9 @@
 
 + (void)uploadFile:(NSString *)fileName
 {
-    NSArray *contactList = [RSUtilities onlineNeighbours];
+    NSArray *contactList = [RSUtilities onlineNeighbors];
     
-    for (NSUInteger i = 0; i < K_NEIGHBOUR; i++) {
+    for (NSUInteger i = 0; i < K_UPLOAD; i++) {
         if (i < contactList.count) {
             NSString *messageString = [NSString stringWithFormat:@"UFILE_%@;%@;%ld",fileName,[RSUtilities getLocalIPAddress],(unsigned long)TTL];
             RSMessager *message = [RSMessager messagerWithPort:UPLOAD_PORT];

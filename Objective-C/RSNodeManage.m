@@ -39,14 +39,14 @@
     return sharedInstance;
 }
 
-- (void)downloadIPList
++ (void)downloadIPList
 {
     RSMessager *message = [RSMessager messagerWithPort:MESSAGE_PORT];
-    [message addDelegate:self];
+    [message addDelegate:[RSNodeManage sharedInstance]];
     [message sendTcpMessage:@"IPLIST" toHost:SERVER_IP tag:0];
 }
 
-- (void)join
++ (void)join
 {
     NSArray *localIPList = [RSUtilities localIpList];
     if (localIPList.count == 0) {
@@ -56,29 +56,29 @@
         [self initFiles];
         for (NSString *ip in localIPList) {
             RSMessager *message = [RSMessager messagerWithPort:MESSAGE_PORT];
-            [message addDelegate:self];
+            [message addDelegate:[RSNodeManage sharedInstance]];
             [message sendTcpMessage:[NSString stringWithFormat:@"JOIN_%@",[RSUtilities getLocalIPAddress]] toHost:ip tag:0];
         }
     }
 }
 
-- (void)quit
++ (void)quit
 {
     for (NSString *ip in [RSUtilities localIpList]) {
         RSMessager *message = [RSMessager messagerWithPort:MESSAGE_PORT];
-        [message addDelegate:self];
+        [message addDelegate:[RSNodeManage sharedInstance]];
         [message sendTcpMessage:[NSString stringWithFormat:@"QUIT_%@",[RSUtilities getLocalIPAddress]] toHost:ip tag:0];
     }
 }
 
-- (void)initFiles
++ (void)initFiles
 {
     if (![[NSFileManager defaultManager]fileExistsAtPath:STORED_DATA_DIRECTORY]) {
         [[NSFileManager defaultManager]createDirectoryAtPath:STORED_DATA_DIRECTORY withIntermediateDirectories:YES attributes:nil error:nil];
     }
     if (![[NSFileManager defaultManager]fileExistsAtPath:PROB_INDEX_PATH]) {
         NSMutableArray *probArray = [NSMutableArray array];
-        for (NSUInteger i = 0; i < NEIGHBOUR_COUNT; i++) {
+        for (NSUInteger i = 0; i < NEIGHBOR_COUNT; i++) {
             if (i < [RSUtilities localIpList].count) {
                 [probArray addObject:[NSString stringWithFormat:@"%@:%ld",[[RSUtilities localIpList]objectAtIndex:i],(unsigned long)INITIAL_PROB_INDEX]];
             }
@@ -112,7 +112,7 @@
         RSMessager *message = [RSMessager messagerWithPort:MESSAGE_PORT];
         [message addDelegate:self];
         [message sendTcpMessage:[NSString stringWithFormat:@"JOIN_%@",[RSUtilities getLocalIPAddress]] toHost:SERVER_IP tag:0];
-        [self initFiles];
+        [RSNodeManage initFiles];
     }
 }
 

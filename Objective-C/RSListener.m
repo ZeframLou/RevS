@@ -79,9 +79,9 @@
                 [message sendTcpMessage:string toHost:requesterIP tag:0];
             }
             else {
-                //You don't have the file,so send a message to one of the neighbours
+                //You don't have the file,so send a message to one of the neighbors
                 [[NSUserDefaults standardUserDefaults]setObject:senderIP forKey:[NSString stringWithFormat:@"%@:sender",[RSUtilities hashFromString:fileName]]];
-                NSArray *contactList = [RSUtilities contactListWithKValue:K_NEIGHBOUR];
+                NSArray *contactList = [RSUtilities contactListWithKValue:K_NEIGHBOR];
                 for (NSString *ip in contactList) {
                     if (![requesterIP isEqualToString:ip]) {
                         NSString *string = [NSString stringWithFormat:@"S_%@;%@;%@;%ld",requesterIP,[RSUtilities getLocalIPAddress],fileName,(unsigned long)ttl];
@@ -161,13 +161,13 @@
     else if ([messageType isEqualToString:@"HASFILE"])
     {
         NSString *fileName = [messageArguments objectAtIndex:0];
-        //if (![[NSUserDefaults standardUserDefaults]boolForKey:[NSString stringWithFormat:@"%@:gotAHit",fileName]]) {
+        if (![[NSUserDefaults standardUserDefaults]boolForKey:[NSString stringWithFormat:@"%@:gotAHit",fileName]]) {
             NSString *fileOwnerIP = [messageArguments objectAtIndex:1];
-            //[[NSUserDefaults standardUserDefaults]setBool:YES forKey:[NSString stringWithFormat:@"%@:gotAHit",fileName]];
+            [[NSUserDefaults standardUserDefaults]setBool:YES forKey:[NSString stringWithFormat:@"%@:gotAHit",fileName]];
             RSMessager *message = [RSMessager messagerWithPort:DOWNLOAD_PORT];
             [message addDelegate:self];
             [message sendTcpMessage:[NSString stringWithFormat:@"DFILE_%@;%@",fileName,[RSUtilities getLocalIPAddress]] toHost:fileOwnerIP tag:0];
-        //}
+        }
     }
     else if ([messageType isEqualToString:@"DFILE"])
     {
@@ -224,16 +224,22 @@
         NSString *uploaderIP = [messageArguments objectAtIndex:3];
         timeToLive -= 1;
         NSData *data = [dataString dataUsingEncoding:NSASCIIStringEncoding];
-        [data writeToFile:[NSString stringWithFormat:@"%@%@",STORED_DATA_DIRECTORY,fileName] atomically:YES];
-        
+        NSString *string = [NSString stringWithFormat:@"UFILE_%@;%@;%ld",fileName,[RSUtilities getLocalIPAddress],(unsigned long)timeToLive];
+        //Prevent error
+        if ([RSUtilities freeDiskspace] < data.length) {
+            string = [NSString stringWithFormat:@"UFILE_%@;%@;%ld",fileName,uploaderIP,(unsigned long)timeToLive + 1];
+        }
+        else
+        {
+            [data writeToFile:[NSString stringWithFormat:@"%@%@",STORED_DATA_DIRECTORY,fileName] atomically:YES];
+        }
         if (timeToLive > 0) {
-            NSArray *contactList = [RSUtilities contactListWithKValue:K_NEIGHBOUR];
-            for (NSUInteger i = 0; i < K_NEIGHBOUR; i++) {
+            NSArray *contactList = [RSUtilities contactListWithKValue:K_NEIGHBOR];
+            for (NSUInteger i = 0; i < K_UPLOAD; i++) {
                 if (i < contactList.count && ![[contactList objectAtIndex:i] isEqualToString:uploaderIP]) {
-                    NSString *messageString = [NSString stringWithFormat:@"UFILE_%@;%@;%ld",fileName,[RSUtilities getLocalIPAddress],(unsigned long)timeToLive];
                     RSMessager *message = [RSMessager messagerWithPort:UPLOAD_PORT];
                     [message addDelegate:[RSListener sharedListener]];
-                    [message sendTcpMessage:messageString toHost:[contactList objectAtIndex:i] tag:0];
+                    [message sendTcpMessage:string toHost:[contactList objectAtIndex:i] tag:0];
                 }
             }
         }

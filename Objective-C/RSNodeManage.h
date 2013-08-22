@@ -36,12 +36,12 @@
 */
 + (RSNodeManage *)sharedInstance;
 /*
-  Sends a message to all the neighbours to tell them that this device is online.If the address of the device is not recorded on the server,send a message to the server too.
+  Sends a message to all the neighbors to tell them that this device is online.If the address of the device is not recorded on the server,send a message to the server too.
 */
-- (void)join;
++ (void)join;
 /*
-  Sends a message to all the neighbours to tell them that this device is offline.
+  Sends a message to all the neighbors to tell them that this device is offline.
 */
-- (void)quit;
++ (void)quit;
 
 @end

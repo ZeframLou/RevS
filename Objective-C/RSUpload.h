@@ -40,7 +40,7 @@
 */
 + (RSUpload *)sharedInstance;
 /*
-  Tell the neighbours to download the file from the sender,and pass it on untill the TTL value becomes zero.
+  Tell the neighbors to download the file from the sender,and pass it on untill the TTL value becomes zero.
 */
 + (void)uploadFile:(NSString *)fileName;
 /*

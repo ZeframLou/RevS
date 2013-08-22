@@ -35,16 +35,16 @@
 @interface RSUtilities : NSObject
 
 /*
-  Returns the addresses of all the neighbours.
+  Returns the addresses of all the neighbors.
 */
 + (NSArray *)localIpList;
 /*
-  Only returns the online neighbours' addresses.
+  Only returns the online neighbors' addresses.
 */
-+ (NSArray *)onlineNeighbours;
++ (NSArray *)onlineNeighbors;
 
 /*
-  Returns the neighbours with the highest probability value.The "k" value is the count of the addresses you want.
+  Returns the neighbors with the highest probability value.The "k" value is the count of the addresses you want.
 */
 + (NSArray *)contactListWithKValue:(NSUInteger)k;
 /*
@@ -61,5 +61,10 @@
   Returns a list of all the files under the "STORED_DATA_DIRECTORY" defined in RSConstants.h
 */
 + (NSArray *)listOfFilenames;
+
+/*
+ Returns the free disk space left in bytes.
+ */
++ (uint64_t)freeDiskspace;
 
 @end

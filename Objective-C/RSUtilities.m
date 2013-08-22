@@ -49,11 +49,11 @@
     return ipArray;
 }
 
-+ (NSArray *)onlineNeighbours
++ (NSArray *)onlineNeighbors
 {
     NSData *data = [NSData dataWithContentsOfFile:IP_LIST_PATH];
     NSString *string = [NSData decryptData:data withKey:CODE];
-    NSMutableArray *neighbourArray = [NSMutableArray array];
+    NSMutableArray *neighborArray = [NSMutableArray array];
     NSArray *dataArray;
     if (string.length > 0) {
         dataArray = [string componentsSeparatedByString:@";"];
@@ -62,21 +62,21 @@
             NSString *ipAddress = [array objectAtIndex:0];
             BOOL isOnline = [[array objectAtIndex:1] integerValue];
             if (isOnline) {
-                [neighbourArray addObject:ipAddress];
+                [neighborArray addObject:ipAddress];
             }
         }
     }
-    return neighbourArray;
+    return neighborArray;
 }
 
 + (NSArray *)contactListWithKValue:(NSUInteger)k
 {
-    NSArray *ipList = [RSUtilities onlineNeighbours];
+    NSArray *ipList = [RSUtilities onlineNeighbors];
     
     if (k > ipList.count) {
         k = ipList.count;
     }
-    //Get the online neighbours and the coresponding probability index value
+    //Get the online neighbors and the coresponding probability index value
     NSString *dataString = [NSData decryptData:[NSData dataWithContentsOfFile:PROB_INDEX_PATH] withKey:CODE];
     NSMutableArray *dataArray = [NSMutableArray arrayWithArray:[dataString componentsSeparatedByString:@","]];
     
@@ -91,7 +91,7 @@
             [probIndexList addObject:probIndex];
         }
     }
-    //Get the neighbours with the highest probability value
+    //Get the neighbors with the highest probability value
     NSMutableArray *contactList = [NSMutableArray array];
     NSArray *sortedIndexList = [probIndexList sortedArrayUsingSelector:@selector(compare:)];
     //sortedIndexList is the sorted version of probIndexList in an ascending order.
@@ -164,6 +164,27 @@
 {
     NSArray *fileList = [[NSFileManager defaultManager]contentsOfDirectoryAtPath:STORED_DATA_DIRECTORY error:nil];
     return fileList;
+}
+
++ (uint64_t)freeDiskspace
+{
+    uint64_t totalSpace = 0;
+    uint64_t totalFreeSpace = 0;
+    
+    __autoreleasing NSError *error = nil;
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSDictionary *dictionary = [[NSFileManager defaultManager] attributesOfFileSystemForPath:[paths lastObject] error: &error];
+    
+    if (dictionary) {
+        NSNumber *fileSystemSizeInBytes = [dictionary objectForKey: NSFileSystemSize];
+        NSNumber *freeFileSystemSizeInBytes = [dictionary objectForKey:NSFileSystemFreeSize];
+        totalSpace = [fileSystemSizeInBytes unsignedLongLongValue];
+        totalFreeSpace = [freeFileSystemSizeInBytes unsignedLongLongValue];
+    } else {
+        NSLog(@"Error Obtaining System Memory Info: Domain = %@, Code = %ld", [error domain], (long)[error code]);
+    }
+    
+    return totalFreeSpace;
 }
 
 @end
