@@ -46,7 +46,6 @@
         RSMessager *messager = [[RSMessager alloc]init];
         messager.delegates = [NSMutableArray array];
         messager.tcpSocket = [[GCDAsyncSocket alloc]initWithDelegate:messager delegateQueue:[RSMessager delegateQueue]];
-        [messager.tcpSocket startTLS:nil];
         [messager.tcpSocket acceptOnPort:port error:nil];
         messager.port = port;
     //}
