@@ -8,7 +8,7 @@ RevS is an open source project that allows developers to build Peer-to-Peer base
  * [Logics behind RevS](https://github.com/theGreatLzbdd/RevS/wiki/Logics-behind-RevS)
 
 ##Test Apps
- * [for iOS](https://github.com/theGreatLzbdd/RevSTest-Objective-C）
+ * [For iOS](https://github.com/theGreatLzbdd/RevSTest-Objective-C)
 
 ## P2P + Online Services,better together
 Today,most online services still use centralized servers,which is more expensive and easier to go down.P2P seems a much better approach.
