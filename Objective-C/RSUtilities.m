@@ -35,7 +35,7 @@
 + (NSArray *)localIpList
 {
     NSData *data = [NSData dataWithContentsOfFile:IP_LIST_PATH];
-    NSString *string = [NSData decryptData:data withKey:CODE];
+    NSString *string = [NSData decryptData:data withKey:FILE_CODE];
     NSMutableArray *ipArray = [NSMutableArray array];
     NSArray *dataArray;
     if (string.length > 0) {
@@ -52,7 +52,7 @@
 + (NSArray *)onlineNeighbors
 {
     NSData *data = [NSData dataWithContentsOfFile:IP_LIST_PATH];
-    NSString *string = [NSData decryptData:data withKey:CODE];
+    NSString *string = [NSData decryptData:data withKey:FILE_CODE];
     NSMutableArray *neighborArray = [NSMutableArray array];
     NSArray *dataArray;
     if (string.length > 0) {
@@ -77,7 +77,7 @@
         k = ipList.count;
     }
     //Get the online neighbors and the coresponding probability index value
-    NSString *dataString = [NSData decryptData:[NSData dataWithContentsOfFile:PROB_INDEX_PATH] withKey:CODE];
+    NSString *dataString = [NSData decryptData:[NSData dataWithContentsOfFile:PROB_INDEX_PATH] withKey:FILE_CODE];
     NSMutableArray *dataArray = [NSMutableArray arrayWithArray:[dataString componentsSeparatedByString:@","]];
     
     NSMutableArray *probIndexList = [NSMutableArray array];
@@ -139,7 +139,7 @@
 
 + (NSString *)hashFromString:(NSString *)string
 {
-    NSData *data = [string dataUsingEncoding:NSASCIIStringEncoding];
+    NSData *data = [string dataUsingEncoding:NSUTF8StringEncoding];
     NSString *hash = [NSString string];
     unsigned char digest[CC_SHA1_DIGEST_LENGTH];
     if (CC_SHA1([data bytes], [data length], digest)) {

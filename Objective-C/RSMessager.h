@@ -42,6 +42,18 @@
 */
 - (void)sendTcpMessage:(NSString *)message toHost:(NSString *)host tag:(NSInteger)tag;
 - (void)addDelegate:(id <RSMessagerDelegate>)delegate;
+/*
+  Returns a formatted message following the RevS Message Protocol(RSMP).Visit https://github.com/theGreatLzbdd/RevS/wiki/RevS-Message-Protocol to learn more.
+*/
++ (NSString *)messageWithIdentifier:(NSString *)identifier arguments:(NSArray *)arguments;
+/*
+  Returns the identifier in a message string following the RevS Message Protocol(RSMP).Visit https://github.com/theGreatLzbdd/RevS/wiki/RevS-Message-Protocol to learn more.
+*/
++ (NSString *)identifierOfMessage:(NSString *)message;
+/*
+  Returns the arguments in a message string following the RevS Message Protocol(RSMP).Visit https://github.com/theGreatLzbdd/RevS/wiki/RevS-Message-Protocol to learn more.
+*/
++ (NSArray *)argumentsOfMessage:(NSString *)message;
 
 @end
 

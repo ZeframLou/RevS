@@ -54,9 +54,9 @@
 
 - (void)messager:(RSMessager *)messager didRecieveData:(NSData *)data tag:(NSInteger)tag;
 {
-    NSString *messageString = [NSData decryptData:data withKey:CODE];
-    NSString *messageType = [[messageString componentsSeparatedByString:@"_"]objectAtIndex:0];
-    NSArray *messageArguments = [[[messageString componentsSeparatedByString:@"_"]lastObject]componentsSeparatedByString:@";"];
+    NSString *messageString = [NSData decryptData:data withKey:MESSAGE_CODE];
+    NSString *messageType = [RSMessager identifierOfMessage:messageString];
+    NSArray *messageArguments = [RSMessager argumentsOfMessage:messageString];
     if ([messageType isEqualToString:@"S"]) {
         //Someone requested a search
         NSString *requesterIP = [messageArguments objectAtIndex:0];
@@ -67,13 +67,13 @@
         if (ttl > 0) {
             if ([[RSUtilities listOfFilenames]containsObject:fileName]) {
                 //Ooh,you have the file!First,send a message to the sender to increase the probability index on this path
-                NSString *incIndexMessageString = [NSString stringWithFormat:@"INC_%ld;%@;%@",(unsigned long)INDEX_INC,[RSUtilities getLocalIPAddress],fileName];
+                NSString *incIndexMessageString = [RSMessager messageWithIdentifier:@"INC" arguments:@[[NSString stringWithFormat:@"%ld",INDEX_INC],[RSUtilities getLocalIPAddress],fileName]];
                 RSMessager *incIndexMessage = [RSMessager messagerWithPort:DOWNLOAD_PORT];
                 [incIndexMessage addDelegate:self];
                 [incIndexMessage sendTcpMessage:incIndexMessageString toHost:senderIP tag:0];
                 
                 //Next,tell the requester that you have the file
-                NSString *string = [NSString stringWithFormat:@"HASFILE_%@;%@",fileName,[RSUtilities getLocalIPAddress]];
+                NSString *string = [RSMessager messageWithIdentifier:@"HASFILE" arguments:@[fileName,[RSUtilities getLocalIPAddress]]];
                 RSMessager *message = [RSMessager messagerWithPort:DOWNLOAD_PORT];
                 [message addDelegate:self];
                 [message sendTcpMessage:string toHost:requesterIP tag:0];
@@ -84,7 +84,7 @@
                 NSArray *contactList = [RSUtilities contactListWithKValue:K_NEIGHBOR];
                 for (NSString *ip in contactList) {
                     if (![requesterIP isEqualToString:ip]) {
-                        NSString *string = [NSString stringWithFormat:@"S_%@;%@;%@;%ld",requesterIP,[RSUtilities getLocalIPAddress],fileName,(unsigned long)ttl];
+                        NSString *string = [RSMessager messageWithIdentifier:@"S" arguments:@[requesterIP,[RSUtilities getLocalIPAddress],fileName,[NSString stringWithFormat:@"%ld",ttl]]];
                         RSMessager *message = [RSMessager messagerWithPort:DOWNLOAD_PORT];
                         [message addDelegate:self];
                         [message sendTcpMessage:string toHost:ip tag:0];
@@ -99,7 +99,7 @@
         NSString *fileName = [messageArguments objectAtIndex:2];
         
         //Change probability index
-        NSString *dataString = [NSData decryptData:[NSData dataWithContentsOfFile:PROB_INDEX_PATH] withKey:CODE];
+        NSString *dataString = [NSData decryptData:[NSData dataWithContentsOfFile:PROB_INDEX_PATH] withKey:FILE_CODE];
         NSMutableArray *dataArray = [NSMutableArray arrayWithArray:[dataString componentsSeparatedByString:@","]];
         
         NSMutableArray *probIndexList = [NSMutableArray array];
@@ -115,14 +115,14 @@
         senderProbIndex += inc;
         [dataArray replaceObjectAtIndex:[probIndexContactList indexOfObject:senderIP] withObject:[NSString stringWithFormat:@"%@:%ld",senderIP,(unsigned long)senderProbIndex]];
         NSString *newProbIndexString = [dataArray componentsJoinedByString:@","];
-        [[NSData encryptString:newProbIndexString withKey:CODE]writeToFile:PROB_INDEX_PATH atomically:YES];
+        [[NSData encryptString:newProbIndexString withKey:FILE_CODE]writeToFile:PROB_INDEX_PATH atomically:YES];
         
         //Pass on the message
         NSString *senderKey = [NSString stringWithFormat:@"%@:sender",[RSUtilities hashFromString:fileName]];
         NSString *recieverIP = [[NSUserDefaults standardUserDefaults]objectForKey:senderKey];
         [[NSUserDefaults standardUserDefaults]removeObjectForKey:senderKey];
         if (recieverIP) {
-            NSString *incIndexMessageString = [NSString stringWithFormat:@"INC_%ld;%@;%@",(unsigned long)INDEX_INC,[RSUtilities getLocalIPAddress],fileName];
+            NSString *incIndexMessageString = [RSMessager messageWithIdentifier:@"INC" arguments:@[[NSString stringWithFormat:@"%ld",INDEX_INC],[RSUtilities getLocalIPAddress],fileName]];
             RSMessager *incIndexMessage = [RSMessager messagerWithPort:DOWNLOAD_PORT];
             [incIndexMessage addDelegate:self];
             [incIndexMessage sendTcpMessage:messageString toHost:recieverIP tag:0];
@@ -130,7 +130,7 @@
     }
     else if ([messageType isEqualToString:@"JOIN"]) {
         NSString *ipAddress = [messageArguments objectAtIndex:0];
-        NSString *dataString = [NSData decryptData:[NSData dataWithContentsOfFile:IP_LIST_PATH] withKey:CODE];
+        NSString *dataString = [NSData decryptData:[NSData dataWithContentsOfFile:IP_LIST_PATH] withKey:FILE_CODE];
         NSMutableArray *dataArray = [NSMutableArray arrayWithArray:[dataString componentsSeparatedByString:@";"]];
         for (NSString *string in dataArray) {
             NSArray *array = [string componentsSeparatedByString:@","];
@@ -141,11 +141,11 @@
             }
         }
         NSString *ipListString = [dataArray componentsJoinedByString:@";"];
-        [[NSData encryptString:ipListString withKey:CODE]writeToFile:IP_LIST_PATH atomically:YES];
+        [[NSData encryptString:ipListString withKey:FILE_CODE]writeToFile:IP_LIST_PATH atomically:YES];
     }
     else if ([messageType isEqualToString:@"QUIT"]) {
         NSString *ipAddress = [messageArguments objectAtIndex:0];
-        NSString *dataString = [NSData decryptData:[NSData dataWithContentsOfFile:IP_LIST_PATH] withKey:CODE];
+        NSString *dataString = [NSData decryptData:[NSData dataWithContentsOfFile:IP_LIST_PATH] withKey:FILE_CODE];
         NSMutableArray *dataArray = [NSMutableArray arrayWithArray:[dataString componentsSeparatedByString:@";"]];
         for (NSString *string in dataArray) {
             NSArray *array = [string componentsSeparatedByString:@","];
@@ -156,7 +156,7 @@
             }
         }
         NSString *ipListString = [dataArray componentsJoinedByString:@";"];
-        [[NSData encryptString:ipListString withKey:CODE]writeToFile:IP_LIST_PATH atomically:YES];
+        [[NSData encryptString:ipListString withKey:FILE_CODE]writeToFile:IP_LIST_PATH atomically:YES];
     }
     else if ([messageType isEqualToString:@"HASFILE"])
     {
@@ -166,7 +166,7 @@
             [[NSUserDefaults standardUserDefaults]setBool:YES forKey:[NSString stringWithFormat:@"%@:gotAHit",fileName]];
             RSMessager *message = [RSMessager messagerWithPort:DOWNLOAD_PORT];
             [message addDelegate:self];
-            [message sendTcpMessage:[NSString stringWithFormat:@"DFILE_%@;%@",fileName,[RSUtilities getLocalIPAddress]] toHost:fileOwnerIP tag:0];
+            [message sendTcpMessage:[RSMessager messageWithIdentifier:@"DFILE" arguments:@[fileName,[RSUtilities getLocalIPAddress]]] toHost:fileOwnerIP tag:0];
         }
     }
     else if ([messageType isEqualToString:@"DFILE"])
@@ -174,8 +174,8 @@
         NSString *fileName = [messageArguments objectAtIndex:0];
         NSString *requesterIP = [messageArguments objectAtIndex:1];
         NSData *data = [NSData dataWithContentsOfFile:[NSString stringWithFormat:@"%@%@",STORED_DATA_DIRECTORY,fileName]];
-        NSString *dataString = [[NSString alloc] initWithData:data encoding:NSASCIIStringEncoding];
-        NSString *string = [NSString stringWithFormat:@"FILE_%@;%@",fileName,dataString];
+        NSString *dataString = [NSData decryptData:data withKey:FILE_CODE];//[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+        NSString *string = [RSMessager messageWithIdentifier:@"FILE" arguments:@[fileName,dataString]];
         RSMessager *message = [RSMessager messagerWithPort:DOWNLOAD_PORT];
         [message addDelegate:self];
         [message sendTcpMessage:string toHost:requesterIP tag:0];
@@ -183,7 +183,7 @@
     else if ([messageType isEqualToString:@"FILE"]) {
         NSString *fileName = [messageArguments objectAtIndex:0];
         NSString *dataString = [messageArguments objectAtIndex:1];
-        NSData *data = [dataString dataUsingEncoding:NSASCIIStringEncoding];
+        NSData *data = [NSData encryptString:dataString withKey:FILE_CODE];
         [data writeToFile:[NSString stringWithFormat:@"%@%@",STORED_DATA_DIRECTORY,fileName] atomically:YES];
         for (id delegate in delegates) {
             if ([delegate respondsToSelector:@selector(didSaveFile:)]) {
@@ -198,7 +198,7 @@
         NSUInteger timeToLive = [[messageArguments objectAtIndex:2] integerValue];
         RSMessager *message = [RSMessager messagerWithPort:UPLOAD_PORT];
         [message addDelegate:self];
-        [message sendTcpMessage:[NSString stringWithFormat:@"ASKFILE_%@;%@;%ld",fileName,[RSUtilities getLocalIPAddress],(unsigned long)timeToLive] toHost:fileOwnerIP tag:0];
+        [message sendTcpMessage:[RSMessager messageWithIdentifier:@"ASKFILE" arguments:@[fileName,[RSUtilities getLocalIPAddress],[NSString stringWithFormat:@"%ld",timeToLive]]] toHost:fileOwnerIP tag:0];
     }
     else if ([messageType isEqualToString:@"ASKFILE"])
     {
@@ -206,8 +206,8 @@
         NSString *requesterIP = [messageArguments objectAtIndex:1];
         NSUInteger timeToLive = [[messageArguments objectAtIndex:2] integerValue];
         NSData *data = [NSData dataWithContentsOfFile:[NSString stringWithFormat:@"%@%@",STORED_DATA_DIRECTORY,fileName]];
-        NSString *dataString = [[NSString alloc] initWithData:data encoding:NSASCIIStringEncoding];
-        NSString *string = [NSString stringWithFormat:@"SENDFILE_%@;%@;%ld;%@",fileName,dataString,(unsigned long)timeToLive,[RSUtilities getLocalIPAddress]];
+        NSString *dataString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+        NSString *string = [RSMessager messageWithIdentifier:@"SENDFILE" arguments:@[fileName,dataString,[NSString stringWithFormat:@"%ld",timeToLive]]];
         RSMessager *message = [RSMessager messagerWithPort:DOWNLOAD_PORT];
         [message addDelegate:self];
         [message sendTcpMessage:string toHost:requesterIP tag:0];
@@ -223,11 +223,11 @@
         NSUInteger timeToLive = [[messageArguments objectAtIndex:2] integerValue];
         NSString *uploaderIP = [messageArguments objectAtIndex:3];
         timeToLive -= 1;
-        NSData *data = [dataString dataUsingEncoding:NSASCIIStringEncoding];
-        NSString *string = [NSString stringWithFormat:@"UFILE_%@;%@;%ld",fileName,[RSUtilities getLocalIPAddress],(unsigned long)timeToLive];
+        NSData *data = [dataString dataUsingEncoding:NSUTF8StringEncoding];
+        NSString *string = [RSMessager messageWithIdentifier:@"UFILE" arguments:@[fileName,[RSUtilities getLocalIPAddress],[NSString stringWithFormat:@"%ld",timeToLive]]];
         //Prevent error
         if ([RSUtilities freeDiskspace] < data.length) {
-            string = [NSString stringWithFormat:@"UFILE_%@;%@;%ld",fileName,uploaderIP,(unsigned long)timeToLive + 1];
+            string = [RSMessager messageWithIdentifier:@"UFILE" arguments:@[fileName,uploaderIP,[NSString stringWithFormat:@"%ld",timeToLive + 1]]];
         }
         else
         {

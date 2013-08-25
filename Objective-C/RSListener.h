@@ -30,8 +30,7 @@
   You CAN use this class to wrap the recieved messages by using the didRecieveDataWithType:arguments method.
   You should use this class with caution:don't use identifiers that's the same as the identifiers used by RevS.
   If you want to use RSListener to handle your messages,simply change the delegate of your RSMessage object to [RSListener sharedListener]
-  If you use RSListener to handle your messages,your message should use this format:
-  MESSAGETYPE_argument1;argument2;argument3...
+  If you use RSListener to handle your messages,you should follow the RevS Message Protocol.Visit https://github.com/theGreatLzbdd/RevS/wiki/RevS-Message-Protocol to lern more.
 */
 
 @protocol RSListenerDelegate;

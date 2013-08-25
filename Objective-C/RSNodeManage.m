@@ -57,7 +57,7 @@
         for (NSString *ip in localIPList) {
             RSMessager *message = [RSMessager messagerWithPort:MESSAGE_PORT];
             [message addDelegate:[RSNodeManage sharedInstance]];
-            [message sendTcpMessage:[NSString stringWithFormat:@"JOIN_%@",[RSUtilities getLocalIPAddress]] toHost:ip tag:0];
+            [message sendTcpMessage:[RSMessager messageWithIdentifier:@"JOIN" arguments:@[[RSUtilities getLocalIPAddress]]] toHost:ip tag:0];
         }
     }
 }
@@ -67,7 +67,7 @@
     for (NSString *ip in [RSUtilities localIpList]) {
         RSMessager *message = [RSMessager messagerWithPort:MESSAGE_PORT];
         [message addDelegate:[RSNodeManage sharedInstance]];
-        [message sendTcpMessage:[NSString stringWithFormat:@"QUIT_%@",[RSUtilities getLocalIPAddress]] toHost:ip tag:0];
+        [message sendTcpMessage:[RSMessager messageWithIdentifier:@"QUIT" arguments:@[[RSUtilities getLocalIPAddress]]] toHost:ip tag:0];
     }
 }
 
@@ -84,7 +84,7 @@
             }
         }
         NSString *probIndexString = [probArray componentsJoinedByString:@","];
-        NSData *encryptedString = [NSData encryptString:probIndexString withKey:CODE];
+        NSData *encryptedString = [NSData encryptString:probIndexString withKey:MESSAGE_CODE];
         [encryptedString writeToFile:PROB_INDEX_PATH atomically:YES];
     }
 }
@@ -93,25 +93,25 @@
 
 - (void)messager:(RSMessager *)messager didRecieveData:(NSData *)data tag:(NSInteger)tag;
 {
-    NSString *messageString = [NSData decryptData:data withKey:CODE];
-    NSString *messageType = [[messageString componentsSeparatedByString:@"_"]objectAtIndex:0];
-    NSArray *messageArguments = [[[messageString componentsSeparatedByString:@"_"]lastObject]componentsSeparatedByString:@";"];
+    NSString *messageString = [NSData decryptData:data withKey:MESSAGE_CODE];
+    NSString *messageType = [RSMessager identifierOfMessage:messageString];
+    NSArray *messageArguments = [RSMessager argumentsOfMessage:messageString];
     if ([messageType isEqualToString:@"IPL"]) {
         NSString *listString = [messageArguments lastObject];
         //The ip list is formatted like this:
         //Address1,isOnline;Address2,isOnline;Address3,isOnline...
         //"isOnline"is a BOOL value.
-        NSData *encryptedList = [NSData encryptString:listString withKey:CODE];
+        NSData *encryptedList = [NSData encryptString:listString withKey:MESSAGE_CODE];
         [encryptedList writeToFile:IP_LIST_PATH atomically:YES];
         NSArray *ipList = [RSUtilities localIpList];
         for (NSString *ip in ipList) {
             RSMessager *message = [RSMessager messagerWithPort:MESSAGE_PORT];
             [message addDelegate:self];
-            [message sendTcpMessage:[NSString stringWithFormat:@"JOIN_%@",[RSUtilities getLocalIPAddress]] toHost:ip tag:0];
+            [message sendTcpMessage:[RSMessager messageWithIdentifier:@"JOIN" arguments:@[[RSUtilities getLocalIPAddress]]] toHost:ip tag:0];
         }
         RSMessager *message = [RSMessager messagerWithPort:MESSAGE_PORT];
         [message addDelegate:self];
-        [message sendTcpMessage:[NSString stringWithFormat:@"JOIN_%@",[RSUtilities getLocalIPAddress]] toHost:SERVER_IP tag:0];
+        [message sendTcpMessage:[RSMessager messageWithIdentifier:@"JOIN" arguments:@[[RSUtilities getLocalIPAddress]]] toHost:SERVER_IP tag:0];
         [RSNodeManage initFiles];
     }
 }

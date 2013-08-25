@@ -63,8 +63,8 @@
 + (NSArray *)listOfFilenames;
 
 /*
- Returns the free disk space left in bytes.
- */
+  Returns the free disk space left in bytes.
+*/
 + (uint64_t)freeDiskspace;
 
 @end

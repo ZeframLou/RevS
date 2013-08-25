@@ -25,7 +25,8 @@
 
 #warning If you don't change these and publish your app with it,you might want to shoot yourself in the face LOL
 
-static const NSString *CODE = @"just a simple code(you need to change this into a 256 bit password)";
+static const NSString *FILE_CODE = @"just a simple code(you need to change this into a 256 bit password)";//For encrypting and decrypting files
+static const NSString *MESSAGE_CODE = @"just a simple code(you need to change this into a 256 bit password)";//For encrypting and decrypting messages
 static const NSString *SERVER_IP = @"127.0.0.1";
 
 //As for the constants below,change them,don't change them,it doesn't really matter

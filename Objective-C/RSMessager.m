@@ -66,7 +66,7 @@
     }
     else
     {
-        [tcpSocket writeData:[NSData encryptString:tcpMessage withKey:CODE] withTimeout:30 tag:tag];
+        [tcpSocket writeData:[NSData encryptString:tcpMessage withKey:MESSAGE_CODE] withTimeout:30 tag:tag];
     }
 }
 
@@ -75,6 +75,33 @@
     if (![delegates containsObject:delegate]) {
         [delegates addObject:delegate];
     }
+}
+
++ (NSString *)messageWithIdentifier:(NSString *)identifier arguments:(NSArray *)arguments
+{
+    NSString *message = [NSString stringWithFormat:@"ID{%@}|ARG{",identifier];
+    NSUInteger i = 0;
+    for (NSString *argument in arguments) {
+        message = [message stringByAppendingString:argument];
+        if (i != arguments.count - 1) {
+            message = [message stringByAppendingString:@"[;]"];
+        }
+        i += 1;
+    }
+    message = [message stringByAppendingString:@"}"];
+    return message;
+}
+
++ (NSString *)identifierOfMessage:(NSString *)message
+{
+    return [[message substringFromIndex:3] substringToIndex:[message rangeOfString:@"}|ARG{"].location];
+}
+
++ (NSArray *)argumentsOfMessage:(NSString *)message
+{
+    NSString *argumentsString = [message substringFromIndex:[message rangeOfString:@"ARG{"].location + 4];
+    NSArray *arguments = [[argumentsString substringToIndex:argumentsString.length - 1] componentsSeparatedByString:@"[;]"];
+    return arguments;
 }
 
 + (dispatch_queue_t)delegateQueue
@@ -97,7 +124,7 @@
 
 - (void)socket:(GCDAsyncSocket *)sock didConnectToHost:(NSString *)host port:(uint16_t)port
 {
-    [sock writeData:[NSData encryptString:tcpMessage withKey:CODE] withTimeout:30 tag:tag];
+    [sock writeData:[NSData encryptString:tcpMessage withKey:MESSAGE_CODE] withTimeout:30 tag:tag];
 }
 
 - (void)socket:(GCDAsyncSocket *)sock didAcceptNewSocket:(GCDAsyncSocket *)newSocket

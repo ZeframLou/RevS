@@ -55,14 +55,14 @@
     [[NSUserDefaults standardUserDefaults]removeObjectForKey:[NSString stringWithFormat:@"%@:gotAHit",fileName]];
     //Send search query
     for (NSString *ipAddress in contactList) {
-        NSString *messageString = [NSString stringWithFormat:@"S_%@;%@;%@;%ld",[RSUtilities getLocalIPAddress],[RSUtilities getLocalIPAddress],fileName,(unsigned long)TTL];
+        NSString *messageString = [RSMessager messageWithIdentifier:@"S" arguments:@[[RSUtilities getLocalIPAddress],[RSUtilities getLocalIPAddress],fileName,[NSString stringWithFormat:@"%ld",TTL]]];
         [messager sendTcpMessage:messageString toHost:ipAddress tag:0];
     }
 }
 
 - (void)downloadFile:(NSString *)fileName fromIP:(NSString *)ipAddress
 {
-    [messager sendTcpMessage:[NSString stringWithFormat:@"DFILE_%@,%@",fileName,[RSUtilities getLocalIPAddress]] toHost:ipAddress tag:0];
+    [messager sendTcpMessage:[RSMessager messageWithIdentifier:@"DFILE" arguments:@[fileName,[RSUtilities getLocalIPAddress]]] toHost:ipAddress tag:0];
 }
 
 - (void)addDelegate:(id <RSDownloadDelegate>)delegate
