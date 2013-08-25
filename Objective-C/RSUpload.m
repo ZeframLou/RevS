@@ -41,7 +41,7 @@
     if (!sharedInstance) {
         sharedInstance = [[RSUpload alloc]init];
         sharedInstance.delegates = [NSMutableArray array];
-        [[RSListener sharedListener]addDelegate:sharedInstance];
+        [RSListener addDelegate:sharedInstance];
     }
     return sharedInstance;
 }
@@ -68,10 +68,10 @@
     [message sendTcpMessage:messageString toHost:host tag:0];
 }
 
-- (void)addDelegate:(id <RSUploadDelegate>)delegate
++ (void)addDelegate:(id <RSUploadDelegate>)delegate
 {
-    if (![delegates containsObject:delegate]) {
-        [delegates addObject:delegate];
+    if (![[RSUpload sharedInstance].delegates containsObject:delegate]) {
+        [[RSUpload sharedInstance].delegates addObject:delegate];
     }
 }
 

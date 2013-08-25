@@ -122,6 +122,8 @@
     return queue;
 }
 
+#pragma mark - GCDAsyncSocketDelegate
+
 - (void)socket:(GCDAsyncSocket *)sock didConnectToHost:(NSString *)host port:(uint16_t)port
 {
     [sock writeData:[NSData encryptString:tcpMessage withKey:MESSAGE_CODE] withTimeout:30 tag:tag];

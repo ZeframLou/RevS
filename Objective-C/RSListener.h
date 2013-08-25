@@ -44,7 +44,7 @@
  Returns a static RSListener object.
 */
 + (RSListener *)sharedListener;
-- (void)addDelegate:(id <RSListenerDelegate>)delegate;
++ (void)addDelegate:(id <RSListenerDelegate>)delegate;
 
 @end
 

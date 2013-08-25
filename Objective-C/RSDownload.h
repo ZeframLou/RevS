@@ -36,12 +36,12 @@
 /*
   Start a search query,if the file is found,then download the file.
 */
-- (void)downloadFile:(NSString *)fileName;
++ (void)downloadFile:(NSString *)fileName;
 /*
   Download a file from a specific address.
 */
-- (void)downloadFile:(NSString *)fileName fromIP:(NSString *)ipAddress;
-- (void)addDelegate:(id <RSDownloadDelegate>)delegate;
++ (void)downloadFile:(NSString *)fileName fromIP:(NSString *)ipAddress;
++ (void)addDelegate:(id <RSDownloadDelegate>)delegate;
 
 @end
 

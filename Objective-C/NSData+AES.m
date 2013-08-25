@@ -92,11 +92,11 @@ return nil;
     return nil;
 }
 + (NSData*) encryptString:(NSString*)plaintext withKey:(NSString*)key {    
-    return [[plaintext dataUsingEncoding:NSASCIIStringEncoding] AES256EncryptWithKey:key];
+    return [[plaintext dataUsingEncoding:NSUTF8StringEncoding] AES256EncryptWithKey:key];
 }
 
 + (NSString*) decryptData:(NSData*)ciphertext withKey:(NSString*)key {    
     return [[NSString alloc] initWithData:[ciphertext AES256DecryptWithKey:key]
-                                 encoding:NSASCIIStringEncoding];
+                                 encoding:NSUTF8StringEncoding];
 }
 @end

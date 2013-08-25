@@ -43,10 +43,10 @@
     return listener;
 }
 
-- (void)addDelegate:(id <RSListenerDelegate>)delegate
++ (void)addDelegate:(id <RSListenerDelegate>)delegate
 {
-    if (![delegates containsObject:delegate]) {
-        [delegates addObject:delegate];
+    if (![[RSListener sharedListener].delegates containsObject:delegate]) {
+        [[RSListener sharedListener].delegates addObject:delegate];
     }
 }
 
