@@ -34,7 +34,7 @@
 */
 
 @protocol RSListenerDelegate;
-@class RSMessager;
+@class RSMessenger;
 
 @interface RSListener : NSObject
 

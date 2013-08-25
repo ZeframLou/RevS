@@ -52,8 +52,8 @@
     
     for (NSUInteger i = 0; i < K_UPLOAD; i++) {
         if (i < contactList.count) {
-            NSString *messageString = [RSMessager messageWithIdentifier:@"UFILE" arguments:@[fileName,[RSUtilities getLocalIPAddress],[NSString stringWithFormat:@"%ld",TTL]]];
-            RSMessager *message = [RSMessager messagerWithPort:UPLOAD_PORT];
+            NSString *messageString = [RSMessenger messageWithIdentifier:@"UFILE" arguments:@[fileName,[RSUtilities getLocalIPAddress],[NSString stringWithFormat:@"%ld",TTL]]];
+            RSMessenger *message = [RSMessenger messengerWithPort:UPLOAD_PORT];
             [message addDelegate:[RSListener sharedListener]];
             [message sendTcpMessage:messageString toHost:[contactList objectAtIndex:i] tag:0];
         }
@@ -62,8 +62,8 @@
 
 + (void)uploadFile:(NSString *)fileName toHost:(NSString *)host
 {
-    NSString *messageString = [RSMessager messageWithIdentifier:@"SENDFILE" arguments:@[fileName,[NSData decryptData:[NSData dataWithContentsOfFile:[STORED_DATA_DIRECTORY stringByAppendingString:fileName]] withKey:FILE_CODE],@"0",[RSUtilities getLocalIPAddress]]];
-    RSMessager *message = [RSMessager messagerWithPort:UPLOAD_PORT];
+    NSString *messageString = [RSMessenger messageWithIdentifier:@"SENDFILE" arguments:@[fileName,[NSData decryptData:[NSData dataWithContentsOfFile:[STORED_DATA_DIRECTORY stringByAppendingString:fileName]] withKey:FILE_CODE],@"0",[RSUtilities getLocalIPAddress]]];
+    RSMessenger *message = [RSMessenger messengerWithPort:UPLOAD_PORT];
     [message addDelegate:[RSListener sharedListener]];
     [message sendTcpMessage:messageString toHost:host tag:0];
 }

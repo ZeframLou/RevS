@@ -1,5 +1,5 @@
 //
-//  RSMessager.m
+//  RSMessenger.m
 //  RevSTest
 //
 //  Created by Zebang Liu on 13-8-1.
@@ -25,7 +25,7 @@
 
 #import "RevS.h"
 
-@interface RSMessager () <GCDAsyncSocketDelegate>
+@interface RSMessenger () <GCDAsyncSocketDelegate>
 
 @property (nonatomic,strong) NSMutableArray *delegates;
 @property (nonatomic) NSInteger tag;
@@ -35,21 +35,21 @@
 
 @end
 
-@implementation RSMessager
+@implementation RSMessenger
 
 @synthesize delegates,tag,port,tcpMessage,tcpSocket;
 
-+ (RSMessager *)messagerWithPort:(uint16_t)port
++ (RSMessenger *)messengerWithPort:(uint16_t)port
 {
-    //static RSMessager *messager;
-    //if (!messager) {
-        RSMessager *messager = [[RSMessager alloc]init];
-        messager.delegates = [NSMutableArray array];
-        messager.tcpSocket = [[GCDAsyncSocket alloc]initWithDelegate:messager delegateQueue:[RSMessager delegateQueue]];
-        [messager.tcpSocket acceptOnPort:port error:nil];
-        messager.port = port;
+    //static RSMessenger *messenger;
+    //if (!messenger) {
+        RSMessenger *messenger = [[RSMessenger alloc]init];
+        messenger.delegates = [NSMutableArray array];
+        messenger.tcpSocket = [[GCDAsyncSocket alloc]initWithDelegate:messenger delegateQueue:[RSMessenger delegateQueue]];
+        [messenger.tcpSocket acceptOnPort:port error:nil];
+        messenger.port = port;
     //}
-    return messager;
+    return messenger;
 }
 
 - (void)sendTcpMessage:(NSString *)message toHost:(NSString *)host tag:(NSInteger)tag
@@ -70,7 +70,7 @@
     }
 }
 
-- (void)addDelegate:(id <RSMessagerDelegate>)delegate
+- (void)addDelegate:(id <RSMessengerDelegate>)delegate
 {
     if (![delegates containsObject:delegate]) {
         [delegates addObject:delegate];
@@ -132,7 +132,7 @@
 - (void)socket:(GCDAsyncSocket *)sock didAcceptNewSocket:(GCDAsyncSocket *)newSocket
 {
     tcpSocket.delegate = self;
-    tcpSocket.delegateQueue = [RSMessager delegateQueue];
+    tcpSocket.delegateQueue = [RSMessenger delegateQueue];
     NSError *error;
     if (error) {
         NSLog(@"%@",error);
@@ -144,8 +144,8 @@
 {
     dispatch_async(dispatch_get_main_queue(), ^{
         for (id delegate in delegates) {
-            if ([delegate respondsToSelector:@selector(messager:didRecieveData:tag:)]) {
-                [delegate messager:self didRecieveData:data tag:tag];
+            if ([delegate respondsToSelector:@selector(messenger:didRecieveData:tag:)]) {
+                [delegate messenger:self didRecieveData:data tag:tag];
             }
         }
     });
@@ -156,8 +156,8 @@
 {
     dispatch_async(dispatch_get_main_queue(), ^{
         for (id delegate in delegates) {
-            if ([delegate respondsToSelector:@selector(messager:didWriteDataWithTag:)]) {
-                [delegate messager:self didWriteDataWithTag:tag];
+            if ([delegate respondsToSelector:@selector(messenger:didWriteDataWithTag:)]) {
+                [delegate messenger:self didWriteDataWithTag:tag];
             }
         }
     });

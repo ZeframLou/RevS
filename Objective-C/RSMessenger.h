@@ -1,5 +1,5 @@
 //
-//  RSMessager.h
+//  RSMessenger.h
 //  RevSTest
 //
 //  Created by Zebang Liu on 13-8-1.
@@ -29,19 +29,19 @@
   This class allows you to send and recieve messages.
 */
 
-@protocol RSMessagerDelegate;
+@protocol RSMessengerDelegate;
 
-@interface RSMessager : NSObject
+@interface RSMessenger : NSObject
 
 /*
-  Initializes a RSMessager object with the given port.
+  Initializes a RSMessenger object with the given port.
 */
-+ (RSMessager *)messagerWithPort:(uint16_t)port;
++ (RSMessenger *)messengerWithPort:(uint16_t)port;
 /*
   Send a tcp message to the specified host.The tag argument is for your own convenience,you can use it as an array index,identifier,etc.
 */
 - (void)sendTcpMessage:(NSString *)message toHost:(NSString *)host tag:(NSInteger)tag;
-- (void)addDelegate:(id <RSMessagerDelegate>)delegate;
+- (void)addDelegate:(id <RSMessengerDelegate>)delegate;
 /*
   Returns a formatted message following the RevS Message Protocol(RSMP).Visit https://github.com/theGreatLzbdd/RevS/wiki/RevS-Message-Protocol to learn more.
 */
@@ -57,17 +57,17 @@
 
 @end
 
-@protocol RSMessagerDelegate <NSObject>
+@protocol RSMessengerDelegate <NSObject>
 
 @optional
 
 /*
-  Called when the messager recieved data.The tag argument is for your own convenience,you can use it as an array index,identifier,etc.
+  Called when the messenger recieved data.The tag argument is for your own convenience,you can use it as an array index,identifier,etc.
 */
-- (void)messager:(RSMessager *)messager didRecieveData:(NSData *)data tag:(NSInteger)tag;
+- (void)messenger:(RSMessenger *)messenger didRecieveData:(NSData *)data tag:(NSInteger)tag;
 /*
-  Called when the messager wrote data on a remote storage.The tag argument is for your own convenience,you can use it as an array index,identifier,etc.
+  Called when the messenger wrote data on a remote storage.The tag argument is for your own convenience,you can use it as an array index,identifier,etc.
 */
-- (void)messager:(RSMessager *)messager didWriteDataWithTag:(NSInteger)tag;
+- (void)messenger:(RSMessenger *)messenger didWriteDataWithTag:(NSInteger)tag;
 
 @end

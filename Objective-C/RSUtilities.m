@@ -26,7 +26,7 @@
 #import <ifaddrs.h>
 #import <arpa/inet.h>
 
-@interface RSUtilities () <RSMessagerDelegate>
+@interface RSUtilities () <RSMessengerDelegate>
 
 @end
 

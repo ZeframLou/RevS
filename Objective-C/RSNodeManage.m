@@ -24,7 +24,7 @@
 
 #import "RevS.h"
 
-@interface RSNodeManage () <RSMessagerDelegate>
+@interface RSNodeManage () <RSMessengerDelegate>
 
 @end
 
@@ -41,7 +41,7 @@
 
 + (void)downloadIPList
 {
-    RSMessager *message = [RSMessager messagerWithPort:MESSAGE_PORT];
+    RSMessenger *message = [RSMessenger messengerWithPort:MESSAGE_PORT];
     [message addDelegate:[RSNodeManage sharedInstance]];
     [message sendTcpMessage:@"IPLIST" toHost:SERVER_IP tag:0];
 }
@@ -55,9 +55,9 @@
     else {
         [self initFiles];
         for (NSString *ip in localIPList) {
-            RSMessager *message = [RSMessager messagerWithPort:MESSAGE_PORT];
+            RSMessenger *message = [RSMessenger messengerWithPort:MESSAGE_PORT];
             [message addDelegate:[RSNodeManage sharedInstance]];
-            [message sendTcpMessage:[RSMessager messageWithIdentifier:@"JOIN" arguments:@[[RSUtilities getLocalIPAddress]]] toHost:ip tag:0];
+            [message sendTcpMessage:[RSMessenger messageWithIdentifier:@"JOIN" arguments:@[[RSUtilities getLocalIPAddress]]] toHost:ip tag:0];
         }
     }
 }
@@ -65,9 +65,9 @@
 + (void)quit
 {
     for (NSString *ip in [RSUtilities localIpList]) {
-        RSMessager *message = [RSMessager messagerWithPort:MESSAGE_PORT];
+        RSMessenger *message = [RSMessenger messengerWithPort:MESSAGE_PORT];
         [message addDelegate:[RSNodeManage sharedInstance]];
-        [message sendTcpMessage:[RSMessager messageWithIdentifier:@"QUIT" arguments:@[[RSUtilities getLocalIPAddress]]] toHost:ip tag:0];
+        [message sendTcpMessage:[RSMessenger messageWithIdentifier:@"QUIT" arguments:@[[RSUtilities getLocalIPAddress]]] toHost:ip tag:0];
     }
 }
 
@@ -91,11 +91,11 @@
 
 #pragma mark - RSMessageDelegate
 
-- (void)messager:(RSMessager *)messager didRecieveData:(NSData *)data tag:(NSInteger)tag;
+- (void)messenger:(RSMessenger *)messenger didRecieveData:(NSData *)data tag:(NSInteger)tag;
 {
     NSString *messageString = [NSData decryptData:data withKey:MESSAGE_CODE];
-    NSString *messageType = [RSMessager identifierOfMessage:messageString];
-    NSArray *messageArguments = [RSMessager argumentsOfMessage:messageString];
+    NSString *messageType = [RSMessenger identifierOfMessage:messageString];
+    NSArray *messageArguments = [RSMessenger argumentsOfMessage:messageString];
     if ([messageType isEqualToString:@"IPL"]) {
         NSString *listString = [messageArguments lastObject];
         //The ip list is formatted like this:
@@ -105,13 +105,13 @@
         [encryptedList writeToFile:IP_LIST_PATH atomically:YES];
         NSArray *ipList = [RSUtilities localIpList];
         for (NSString *ip in ipList) {
-            RSMessager *message = [RSMessager messagerWithPort:MESSAGE_PORT];
+            RSMessenger *message = [RSMessenger messengerWithPort:MESSAGE_PORT];
             [message addDelegate:self];
-            [message sendTcpMessage:[RSMessager messageWithIdentifier:@"JOIN" arguments:@[[RSUtilities getLocalIPAddress]]] toHost:ip tag:0];
+            [message sendTcpMessage:[RSMessenger messageWithIdentifier:@"JOIN" arguments:@[[RSUtilities getLocalIPAddress]]] toHost:ip tag:0];
         }
-        RSMessager *message = [RSMessager messagerWithPort:MESSAGE_PORT];
+        RSMessenger *message = [RSMessenger messengerWithPort:MESSAGE_PORT];
         [message addDelegate:self];
-        [message sendTcpMessage:[RSMessager messageWithIdentifier:@"JOIN" arguments:@[[RSUtilities getLocalIPAddress]]] toHost:SERVER_IP tag:0];
+        [message sendTcpMessage:[RSMessenger messageWithIdentifier:@"JOIN" arguments:@[[RSUtilities getLocalIPAddress]]] toHost:SERVER_IP tag:0];
         [RSNodeManage initFiles];
     }
 }

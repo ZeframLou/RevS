@@ -33,4 +33,4 @@
 #import "GCDAsyncSocket.h"
 #import "GCDAsyncUdpSocket.h"
 #import "NSData+AES.h"
-#import "RSMessager.h"
+#import "RSMessenger.h"
