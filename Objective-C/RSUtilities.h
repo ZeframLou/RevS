@@ -30,8 +30,6 @@
   This class implements all kinds of utility methods.
 */
 
-@protocol RSIPListDelegate;
-
 @interface RSUtilities : NSObject
 
 /*
