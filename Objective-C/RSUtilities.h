@@ -40,7 +40,6 @@
   Only returns the online neighbors' addresses.
 */
 + (NSArray *)onlineNeighbors;
-
 /*
   Returns the neighbors with the highest probability value.The "k" value is the count of the addresses you want.
 */
