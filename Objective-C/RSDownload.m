@@ -55,7 +55,7 @@
     [[NSUserDefaults standardUserDefaults]removeObjectForKey:[NSString stringWithFormat:@"%@:gotAHit",fileName]];
     //Send search query
     for (NSString *ipAddress in contactList) {
-        NSString *messageString = [RSMessenger messageWithIdentifier:@"S" arguments:@[[RSUtilities getLocalIPAddress],[RSUtilities getLocalIPAddress],fileName,[NSString stringWithFormat:@"%ld",TTL]]];
+        NSString *messageString = [RSMessenger messageWithIdentifier:@"S" arguments:@[[RSUtilities getLocalIPAddress],[RSUtilities getLocalIPAddress],fileName,[NSString stringWithFormat:@"%ld",(unsigned long)TTL]]];
         [[RSDownload sharedInstance].messenger sendTcpMessage:messageString toHost:ipAddress tag:0];
     }
 }

@@ -52,7 +52,7 @@
     
     for (NSUInteger i = 0; i < K_UPLOAD; i++) {
         if (i < contactList.count) {
-            NSString *messageString = [RSMessenger messageWithIdentifier:@"UFILE" arguments:@[fileName,[RSUtilities getLocalIPAddress],[NSString stringWithFormat:@"%ld",TTL]]];
+            NSString *messageString = [RSMessenger messageWithIdentifier:@"UFILE" arguments:@[fileName,[RSUtilities getLocalIPAddress],[NSString stringWithFormat:@"%ld",(unsigned long)TTL]]];
             RSMessenger *message = [RSMessenger messengerWithPort:UPLOAD_PORT];
             [message addDelegate:[RSListener sharedListener]];
             [message sendTcpMessage:messageString toHost:[contactList objectAtIndex:i] tag:0];
