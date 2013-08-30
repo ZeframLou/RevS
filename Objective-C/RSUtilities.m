@@ -41,9 +41,9 @@
     if (string.length > 0) {
         dataArray = [string componentsSeparatedByString:@";"];
         for (NSString *dataString in dataArray) {
-            NSArray *array = [dataString componentsSeparatedByString:@","];
-            NSString *ipAddress = [array objectAtIndex:0];
-            [ipArray addObject:ipAddress];
+            NSArray *array = [dataString componentsSeparatedByString:@"|"];
+            NSString *ipAddressString = [array objectAtIndex:1];
+            [ipArray addObject:ipAddressString];
         }
     }
     return ipArray;
@@ -58,11 +58,11 @@
     if (string.length > 0) {
         dataArray = [string componentsSeparatedByString:@";"];
         for (NSString *dataString in dataArray) {
-            NSArray *array = [dataString componentsSeparatedByString:@","];
-            NSString *ipAddress = [array objectAtIndex:0];
+            NSArray *array = [dataString componentsSeparatedByString:@"|"];
+            NSString *ipAddressString = [array objectAtIndex:1];
             BOOL isOnline = [[array objectAtIndex:1] integerValue];
             if (isOnline) {
-                [neighborArray addObject:ipAddress];
+                [neighborArray addObject:ipAddressString];
             }
         }
     }
@@ -78,7 +78,7 @@
     }
     //Get the online neighbors and the coresponding probability index value
     NSString *dataString = [NSData decryptData:[NSData dataWithContentsOfFile:PROB_INDEX_PATH] withKey:FILE_CODE];
-    NSMutableArray *dataArray = [NSMutableArray arrayWithArray:[dataString componentsSeparatedByString:@","]];
+    NSMutableArray *dataArray = [NSMutableArray arrayWithArray:[dataString componentsSeparatedByString:@"/"]];
     
     NSMutableArray *probIndexList = [NSMutableArray array];
     NSMutableArray *probIndexContactList = [NSMutableArray array];
@@ -108,8 +108,8 @@
     return contactList;
 }
 
-+ (NSString *)getLocalIPAddress {
-    /*NSString *address = @"error";
++ (NSString *)privateIPAddress {
+    NSString *address = @"error";
     struct ifaddrs *interfaces = NULL;
     struct ifaddrs *temp_addr = NULL;
     int success = 0;
@@ -130,7 +130,11 @@
         }
     }
     // Free memory
-    freeifaddrs(interfaces);*/
+    freeifaddrs(interfaces);
+    return address;
+}
+
++ (NSString *)publicIpAddress {
     NSString *string = [NSString stringWithContentsOfURL:[NSURL URLWithString:@"http://checkip.dyndns.org"] encoding:NSUTF8StringEncoding error:nil];
     NSString *address = [string substringWithRange:NSMakeRange([string rangeOfString:@": "].location + 2, [string rangeOfString:@"</body>"].location - ([string rangeOfString:@": "].location + 2))];
     

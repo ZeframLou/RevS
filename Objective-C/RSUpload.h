@@ -46,7 +46,7 @@
 /*
   Send a file to a specific host.
 */
-+ (void)uploadFile:(NSString *)fileName toHost:(NSString *)host;
++ (void)uploadFile:(NSString *)fileName toPublicAddress:(NSString *)publicAddress privateAddress:(NSString *)privateAddress;
 + (void)addDelegate:(id <RSUploadDelegate>)delegate;
 
 @end

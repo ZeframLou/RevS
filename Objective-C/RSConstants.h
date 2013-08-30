@@ -49,3 +49,5 @@ static const NSUInteger K_UPLOAD = 2;//K value during upload
 static const NSUInteger INDEX_INC = 10;
 static const NSUInteger NEIGHBOR_COUNT = 16;
 static const NSUInteger INITIAL_PROB_INDEX = 10;
+static const NSUInteger PUBLIC_ADDRESS_TAG = 12;
+static const NSUInteger PRIVATE_ADDRESS_TAG = 14;

@@ -52,20 +52,22 @@
     
     for (NSUInteger i = 0; i < K_UPLOAD; i++) {
         if (i < contactList.count) {
-            NSString *messageString = [RSMessenger messageWithIdentifier:@"UFILE" arguments:@[fileName,[RSUtilities getLocalIPAddress],[NSString stringWithFormat:@"%ld",(unsigned long)TTL]]];
+            NSString *publicAddress = [[[contactList objectAtIndex:i] componentsSeparatedByString:@","] objectAtIndex:0];
+            NSString *privateAddress = [[[contactList objectAtIndex:i] componentsSeparatedByString:@","] objectAtIndex:1];
+            NSString *messageString = [RSMessenger messageWithIdentifier:@"UFILE" arguments:@[fileName,[RSUtilities publicIpAddress],[RSUtilities privateIPAddress],[NSString stringWithFormat:@"%ld",(unsigned long)TTL]]];
             RSMessenger *message = [RSMessenger messengerWithPort:UPLOAD_PORT];
             [message addDelegate:[RSListener sharedListener]];
-            [message sendTcpMessage:messageString toHost:[contactList objectAtIndex:i] tag:0];
+            [message sendUdpMessage:messageString toHostWithPublicAddress:publicAddress privateAddress:privateAddress tag:0];
         }
     }
 }
 
-+ (void)uploadFile:(NSString *)fileName toHost:(NSString *)host
++ (void)uploadFile:(NSString *)fileName toPublicAddress:(NSString *)publicAddress privateAddress:(NSString *)privateAddress
 {
-    NSString *messageString = [RSMessenger messageWithIdentifier:@"SENDFILE" arguments:@[fileName,[NSData decryptData:[NSData dataWithContentsOfFile:[STORED_DATA_DIRECTORY stringByAppendingString:fileName]] withKey:FILE_CODE],@"0",[RSUtilities getLocalIPAddress]]];
+    NSString *messageString = [RSMessenger messageWithIdentifier:@"SENDFILE" arguments:@[fileName,[NSData decryptData:[NSData dataWithContentsOfFile:[STORED_DATA_DIRECTORY stringByAppendingString:fileName]] withKey:FILE_CODE],@"0",[RSUtilities publicIpAddress],[RSUtilities privateIPAddress]]];
     RSMessenger *message = [RSMessenger messengerWithPort:UPLOAD_PORT];
     [message addDelegate:[RSListener sharedListener]];
-    [message sendTcpMessage:messageString toHost:host tag:0];
+    [message sendUdpMessage:messageString toHostWithPublicAddress:publicAddress privateAddress:privateAddress tag:0];
 }
 
 + (void)addDelegate:(id <RSUploadDelegate>)delegate
@@ -84,6 +86,11 @@
             [delegate didUploadFile:fileName];
         }
     }
+}
+
+- (void)didRecieveDataWithType:(NSString *)type arguments:(NSArray *)arguments;
+{
+    
 }
 
 @end

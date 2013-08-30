@@ -55,14 +55,14 @@
     [[NSUserDefaults standardUserDefaults]removeObjectForKey:[NSString stringWithFormat:@"%@:gotAHit",fileName]];
     //Send search query
     for (NSString *ipAddress in contactList) {
-        NSString *messageString = [RSMessenger messageWithIdentifier:@"S" arguments:@[[RSUtilities getLocalIPAddress],[RSUtilities getLocalIPAddress],fileName,[NSString stringWithFormat:@"%ld",(unsigned long)TTL]]];
-        [[RSDownload sharedInstance].messenger sendTcpMessage:messageString toHost:ipAddress tag:0];
+        NSString *messageString = [RSMessenger messageWithIdentifier:@"S" arguments:@[[RSUtilities publicIpAddress],[RSUtilities privateIPAddress],[RSUtilities publicIpAddress],[RSUtilities privateIPAddress],fileName,[NSString stringWithFormat:@"%ld",(unsigned long)TTL]]];
+        [[RSDownload sharedInstance].messenger sendUdpMessage:messageString toHostWithPublicAddress:ipAddress privateAddress:ipAddress tag:0];
     }
 }
 
-+ (void)downloadFile:(NSString *)fileName fromIP:(NSString *)ipAddress
++ (void)downloadFile:(NSString *)fileName fromPublicAddress:(NSString *)publicAddress privateAddress:(NSString *)privateAddress;
 {
-    [[RSDownload sharedInstance].messenger sendTcpMessage:[RSMessenger messageWithIdentifier:@"DFILE" arguments:@[fileName,[RSUtilities getLocalIPAddress]]] toHost:ipAddress tag:0];
+    [[RSDownload sharedInstance].messenger sendUdpMessage:[RSMessenger messageWithIdentifier:@"DFILE" arguments:@[fileName,[RSUtilities publicIpAddress],[RSUtilities privateIPAddress]]] toHostWithPublicAddress:publicAddress privateAddress:privateAddress tag:0];
 }
 
 + (void)addDelegate:(id <RSDownloadDelegate>)delegate
@@ -81,6 +81,11 @@
             [delegate didDownloadFile:fileName];
         }
     }
+}
+
+- (void)didRecieveDataWithType:(NSString *)type arguments:(NSArray *)arguments;
+{
+    
 }
 
 @end

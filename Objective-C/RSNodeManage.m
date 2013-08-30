@@ -43,21 +43,32 @@
 {
     RSMessenger *message = [RSMessenger messengerWithPort:MESSAGE_PORT];
     [message addDelegate:[RSNodeManage sharedInstance]];
-    [message sendTcpMessage:@"IPLIST" toHost:SERVER_IP tag:0];
+    [message sendServerMessage:@"BOOTSTRAP" toServerAddress:SERVER_IP tag:0];
 }
 
 + (void)join
 {
     NSArray *localIPList = [RSUtilities localIpList];
     if (localIPList.count == 0) {
+        NSString *deviceHash = [RSUtilities hashFromString:[NSString stringWithFormat:@"%@|%@",[RSUtilities publicIpAddress],[RSUtilities privateIPAddress]]];
+        [[NSUserDefaults standardUserDefaults]setObject:deviceHash forKey:@"deviceHash"];
         [self downloadIPList];
     }
     else {
         [self initFiles];
-        for (NSString *ip in localIPList) {
+        NSString *currentDeviceHash = [RSUtilities hashFromString:[NSString stringWithFormat:@"%@|%@",[RSUtilities publicIpAddress],[RSUtilities privateIPAddress]]];
+        NSString *savedDeviceHash = [[NSUserDefaults standardUserDefaults]objectForKey:@"deviceHash"];
+        for (NSString *string in localIPList) {
+            NSString *publicAddress = [[string componentsSeparatedByString:@","] objectAtIndex:0];
+            NSString *privateAddress = [[string componentsSeparatedByString:@","] objectAtIndex:1];
             RSMessenger *message = [RSMessenger messengerWithPort:MESSAGE_PORT];
             [message addDelegate:[RSNodeManage sharedInstance]];
-            [message sendTcpMessage:[RSMessenger messageWithIdentifier:@"JOIN" arguments:@[[RSUtilities getLocalIPAddress]]] toHost:ip tag:0];
+            [message sendUdpMessage:[RSMessenger messageWithIdentifier:@"JOIN" arguments:@[savedDeviceHash,[RSUtilities publicIpAddress],[RSUtilities privateIPAddress]]] toHostWithPublicAddress:publicAddress privateAddress:privateAddress tag:0];
+        }
+        if (![currentDeviceHash isEqualToString:savedDeviceHash]) {
+            RSMessenger *message = [RSMessenger messengerWithPort:MESSAGE_PORT];
+            [message addDelegate:[RSNodeManage sharedInstance]];
+            [message sendServerMessage:[RSMessenger messageWithIdentifier:@"JOIN" arguments:@[savedDeviceHash,[RSUtilities publicIpAddress],[RSUtilities privateIPAddress]]] toServerAddress:SERVER_IP tag:0];
         }
     }
 }
@@ -67,7 +78,8 @@
     for (NSString *ip in [RSUtilities localIpList]) {
         RSMessenger *message = [RSMessenger messengerWithPort:MESSAGE_PORT];
         [message addDelegate:[RSNodeManage sharedInstance]];
-        [message sendTcpMessage:[RSMessenger messageWithIdentifier:@"QUIT" arguments:@[[RSUtilities getLocalIPAddress]]] toHost:ip tag:0];
+        NSString *savedDeviceHash = [[NSUserDefaults standardUserDefaults]objectForKey:@"deviceHash"];
+        [message sendServerMessage:[RSMessenger messageWithIdentifier:@"QUIT" arguments:@[savedDeviceHash,[RSUtilities publicIpAddress],[RSUtilities privateIPAddress]]] toServerAddress:SERVER_IP tag:0];
     }
 }
 
@@ -83,7 +95,7 @@
                 [probArray addObject:[NSString stringWithFormat:@"%@:%ld",[[RSUtilities localIpList]objectAtIndex:i],(unsigned long)INITIAL_PROB_INDEX]];
             }
         }
-        NSString *probIndexString = [probArray componentsJoinedByString:@","];
+        NSString *probIndexString = [probArray componentsJoinedByString:@"/"];
         NSData *encryptedString = [NSData encryptString:probIndexString withKey:MESSAGE_CODE];
         [encryptedString writeToFile:PROB_INDEX_PATH atomically:YES];
     }
@@ -91,27 +103,29 @@
 
 #pragma mark - RSMessageDelegate
 
-- (void)messenger:(RSMessenger *)messenger didRecieveData:(NSData *)data tag:(NSInteger)tag;
+- (void)messenger:(RSMessenger *)messenger didRecieveMessageWithIdentifier:(NSString *)identifier arguments:(NSArray *)arguments tag:(NSInteger)tag
 {
-    NSString *messageString = [NSData decryptData:data withKey:MESSAGE_CODE];
-    NSString *messageType = [RSMessenger identifierOfMessage:messageString];
-    NSArray *messageArguments = [RSMessenger argumentsOfMessage:messageString];
-    if ([messageType isEqualToString:@"IPL"]) {
+    NSString *messageType = identifier;
+    NSArray *messageArguments = arguments;
+    NSString *savedDeviceHash = [[NSUserDefaults standardUserDefaults]objectForKey:@"deviceHash"];
+    if ([messageType isEqualToString:@"IPLIST"]) {
         NSString *listString = [messageArguments lastObject];
         //The ip list is formatted like this:
-        //Address1,isOnline;Address2,isOnline;Address3,isOnline...
+        //publicAddress1,privateAddress1|isOnline;publicAddress2,privateAddress2|isOnline;publicAddress3,privateAddress3|isOnline...
         //"isOnline"is a BOOL value.
         NSData *encryptedList = [NSData encryptString:listString withKey:MESSAGE_CODE];
         [encryptedList writeToFile:IP_LIST_PATH atomically:YES];
         NSArray *ipList = [RSUtilities localIpList];
-        for (NSString *ip in ipList) {
+        for (NSString *string in ipList) {
+            NSString *publicAddress = [[string componentsSeparatedByString:@","] objectAtIndex:0];
+            NSString *privateAddress = [[string componentsSeparatedByString:@","] objectAtIndex:1];
             RSMessenger *message = [RSMessenger messengerWithPort:MESSAGE_PORT];
-            [message addDelegate:self];
-            [message sendTcpMessage:[RSMessenger messageWithIdentifier:@"JOIN" arguments:@[[RSUtilities getLocalIPAddress]]] toHost:ip tag:0];
+            [message addDelegate:[RSNodeManage sharedInstance]];
+            [message sendUdpMessage:[RSMessenger messageWithIdentifier:@"JOIN" arguments:@[savedDeviceHash,[RSUtilities publicIpAddress],[RSUtilities privateIPAddress]]] toHostWithPublicAddress:publicAddress privateAddress:privateAddress tag:0];
         }
         RSMessenger *message = [RSMessenger messengerWithPort:MESSAGE_PORT];
         [message addDelegate:self];
-        [message sendTcpMessage:[RSMessenger messageWithIdentifier:@"JOIN" arguments:@[[RSUtilities getLocalIPAddress]]] toHost:SERVER_IP tag:0];
+        [message sendServerMessage:[RSMessenger messageWithIdentifier:@"JOIN" arguments:@[savedDeviceHash,[RSUtilities publicIpAddress],[RSUtilities privateIPAddress]]] toServerAddress:SERVER_IP tag:0];
         [RSNodeManage initFiles];
     }
 }

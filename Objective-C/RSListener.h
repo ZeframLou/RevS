@@ -27,10 +27,7 @@
 
 /*
   This is a class to handle recieved messages for other classes in RevS.
-  You CAN use this class to wrap the recieved messages by using the didRecieveDataWithType:arguments method.
-  You should use this class with caution:don't use identifiers that's the same as the identifiers used by RevS.
-  If you want to use RSListener to handle your messages,simply change the delegate of your RSMessage object to [RSListener sharedListener]
-  If you use RSListener to handle your messages,you should follow the RevS Message Protocol.Visit https://github.com/theGreatLzbdd/RevS/wiki/RevS-Message-Protocol to lern more.
+  You should NOT use this class.
 */
 
 @protocol RSListenerDelegate;
@@ -52,12 +49,6 @@
 
 @optional
 
-/*
-  This is called when RSListener recieves a message.
-  "type"is the identifier you use to identify the message.
-  "arguments"is an array of recieved arguments.
-*/
-- (void)didRecieveDataWithType:(NSString *)type arguments:(NSArray *)arguments;
 /*
   DON'T use the methods below.they are used by RSDownload and RSUpload. 
 */

@@ -33,7 +33,7 @@
 @interface RSUtilities : NSObject
 
 /*
-  Returns the addresses of all the neighbors.
+  Returns an array of strings containing the public and private addresses of all the neighbors.The strings are formatted like this:publicAddress,privateAddress.
 */
 + (NSArray *)localIpList;
 /*
@@ -45,10 +45,13 @@
 */
 + (NSArray *)contactListWithKValue:(NSUInteger)k;
 /*
-  Returns the external IP address of the current device.
+  Returns the local IP address in the local network.(Possibly something like 192.168.0.101)
 */
-+ (NSString *)getLocalIPAddress;
-
++ (NSString *)privateIPAddress;
+/*
+  Returns the device's public Ip address.
+*/
++ (NSString *)publicIpAddress;
 /*
   Returns the SHA-1 hash from the given string.
 */

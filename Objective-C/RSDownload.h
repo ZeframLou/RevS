@@ -40,7 +40,7 @@
 /*
   Download a file from a specific address.
 */
-+ (void)downloadFile:(NSString *)fileName fromIP:(NSString *)ipAddress;
++ (void)downloadFile:(NSString *)fileName fromPublicAddress:(NSString *)publicAddress privateAddress:(NSString *)privateAddress;
 + (void)addDelegate:(id <RSDownloadDelegate>)delegate;
 
 @end
