@@ -4,8 +4,9 @@ RevS
 RevS is an open source project that allows developers to build Peer-to-Peer based online services.
 
 ##Wiki
- * [Guide of adopting RevS](https://github.com/theGreatLzbdd/RevS/wiki/Guide-of-building-an-app-using-RevS(Objective-C)
+ * [Building an app using RevS](https://github.com/theGreatLzbdd/RevS/wiki/Guide-of-building-an-app-using-RevS(Objective-C)
  * [Logics behind RevS](https://github.com/theGreatLzbdd/RevS/wiki/Logics-behind-RevS)
+ * [Setting up a server to support RevS apps](https://github.com/theGreatLzbdd/RevS/wiki/Guide-of-setting-up-a-server-to-support-RevS-apps)
 
 ##Test Apps
  * [For iOS](https://github.com/theGreatLzbdd/RevSTest-Objective-C)
