@@ -43,7 +43,8 @@
 {
     RSMessenger *message = [RSMessenger messengerWithPort:MESSAGE_PORT];
     [message addDelegate:[RSNodeManage sharedInstance]];
-    [message sendServerMessage:@"BOOTSTRAP" toServerAddress:SERVER_IP tag:0];
+    NSString *deviceHash = [RSUtilities hashFromString:[NSString stringWithFormat:@"%@|%@",[RSUtilities publicIpAddress],[RSUtilities privateIPAddress]]];
+    [message sendServerMessage:[RSMessenger messageWithIdentifier:@"BOOTSTRAP" arguments:@[deviceHash,[RSUtilities publicIpAddress],[RSUtilities privateIPAddress]]] toServerAddress:SERVER_IP tag:0];
 }
 
 + (void)join

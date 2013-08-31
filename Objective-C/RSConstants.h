@@ -51,3 +51,5 @@ static const NSUInteger NEIGHBOR_COUNT = 16;
 static const NSUInteger INITIAL_PROB_INDEX = 10;
 static const NSUInteger PUBLIC_ADDRESS_TAG = 12;
 static const NSUInteger PRIVATE_ADDRESS_TAG = 14;
+static const NSUInteger KEEP_ALIVE_TAG = 17;
+static const NSUInteger KEEP_ALIVE_INTERVAL = 300;
