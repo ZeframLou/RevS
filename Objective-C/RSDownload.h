@@ -33,14 +33,17 @@
   Returns a static RSDownload object.
 */
 + (RSDownload *)sharedInstance;
+
 /*
   Start a search query,if the file is found,then download the file.
 */
 + (void)downloadFile:(NSString *)fileName;
+
 /*
   Download a file from a specific address.
 */
 + (void)downloadFile:(NSString *)fileName fromPublicAddress:(NSString *)publicAddress privateAddress:(NSString *)privateAddress;
+
 + (void)addDelegate:(id <RSDownloadDelegate>)delegate;
 
 @end

@@ -35,10 +35,12 @@
  Returns a static RSNodeManage object.
 */
 + (RSNodeManage *)sharedInstance;
+
 /*
   Sends a message to all the neighbors to tell them that this device is online.If the address of the device is not recorded on the server,send a message to the server too.
 */
 + (void)join;
+
 /*
   Sends a message to all the neighbors to tell them that this device is offline.
 */

@@ -37,11 +37,13 @@
   Initializes a RSMessenger object with the given port.
 */
 + (RSMessenger *)messengerWithPort:(uint16_t)port;
+
 /*
   Send a message to the specified host.This method uses udp hole punching in order to bypass the NAT.The tag argument is for your own convenience,you can use it as an array index,identifier,etc.
 */
 //- (void)sendTcpMessage:(NSString *)message toHost:(NSString *)host tag:(NSInteger)tag;
 - (void)sendUdpMessage:(NSString *)message toHostWithPublicAddress:(NSString *)publicAddress privateAddress:(NSString *)privateAddress tag:(NSInteger)tag;
+
 /*
   Send a message to the server.The difference between this method and sendUdpMethod:toHostWithPublicAddress:privateAddress:tag: is that this method doesn't use udp hole punching.
 */
@@ -52,10 +54,12 @@
   Returns a formatted message following the RevS Message Protocol(RSMP).Visit https://github.com/theGreatLzbdd/RevS/wiki/RevS-Message-Protocol to learn more.
 */
 + (NSString *)messageWithIdentifier:(NSString *)identifier arguments:(NSArray *)arguments;
+
 /*
   Returns the identifier in a message string following the RevS Message Protocol(RSMP).Visit https://github.com/theGreatLzbdd/RevS/wiki/RevS-Message-Protocol to learn more.
 */
 + (NSString *)identifierOfMessage:(NSString *)message;
+
 /*
   Returns the arguments in a message string following the RevS Message Protocol(RSMP).Visit https://github.com/theGreatLzbdd/RevS/wiki/RevS-Message-Protocol to learn more.
 */
@@ -71,6 +75,7 @@
   Called when the messenger recieved data.The tag argument is for your own convenience,you can use it as an array index,identifier,etc.
 */
 - (void)messenger:(RSMessenger *)messenger didRecieveMessageWithIdentifier:(NSString *)identifier arguments:(NSArray *)arguments tag:(NSInteger)tag;
+
 /*
   Called when the messenger wrote data on a remote storage.The tag argument is for your own convenience,you can use it as an array index,identifier,etc.
 */

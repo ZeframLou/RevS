@@ -90,7 +90,7 @@
     if (!connected) {
         remotePublicAddress = publicAddress;
         remotePrivateAddress = privateAddress;
-        [udpSocket sendData:[NSData encryptString:[RSMessenger messageWithIdentifier:@"CONS" arguments:@[[RSUtilities publicIpAddress],[RSUtilities privateIPAddress],publicAddress,privateAddress]] withKey:MESSAGE_CODE] toHost:SERVER_IP port:port withTimeout:30 tag:0];
+        [udpSocket sendData:[NSData encryptString:[RSMessenger messageWithIdentifier:@"CONS" arguments:@[[RSUtilities publicIpAddress],[RSUtilities privateIpAddress],publicAddress,privateAddress]] withKey:MESSAGE_CODE] toHost:SERVER_IP port:port withTimeout:30 tag:0];
         
         [udpSocket sendData:[NSData encryptString:[RSMessenger messageWithIdentifier:@"PHOLE" arguments:@[]] withKey:MESSAGE_CODE] toHost:publicAddress port:port withTimeout:30 tag:PUBLIC_ADDRESS_TAG];
         [udpSocket sendData:[NSData encryptString:[RSMessenger messageWithIdentifier:@"PHOLE" arguments:@[]] withKey:MESSAGE_CODE] toHost:privateAddress port:port withTimeout:30 tag:PRIVATE_ADDRESS_TAG];

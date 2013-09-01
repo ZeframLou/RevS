@@ -39,14 +39,17 @@
   Returns a static RSUpload Object.
 */
 + (RSUpload *)sharedInstance;
+
 /*
   Tell the neighbors to download the file from the sender,and pass it on untill the TTL value becomes zero.
 */
 + (void)uploadFile:(NSString *)fileName;
+
 /*
   Send a file to a specific host.
 */
 + (void)uploadFile:(NSString *)fileName toPublicAddress:(NSString *)publicAddress privateAddress:(NSString *)privateAddress;
+
 + (void)addDelegate:(id <RSUploadDelegate>)delegate;
 
 @end

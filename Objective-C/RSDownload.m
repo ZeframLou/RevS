@@ -54,15 +54,17 @@
     NSArray *contactList = [RSUtilities contactListWithKValue:K];
     [[NSUserDefaults standardUserDefaults]removeObjectForKey:[NSString stringWithFormat:@"%@:gotAHit",fileName]];
     //Send search query
-    for (NSString *ipAddress in contactList) {
-        NSString *messageString = [RSMessenger messageWithIdentifier:@"S" arguments:@[[RSUtilities publicIpAddress],[RSUtilities privateIPAddress],[RSUtilities publicIpAddress],[RSUtilities privateIPAddress],fileName,[NSString stringWithFormat:@"%ld",(unsigned long)TTL]]];
-        [[RSDownload sharedInstance].messenger sendUdpMessage:messageString toHostWithPublicAddress:ipAddress privateAddress:ipAddress tag:0];
+    for (NSString *string in contactList) {
+        NSString *publicIP = [RSUtilities publicIpInString:string];
+        NSString *privateIP = [RSUtilities privateIpInString:string];
+        NSString *messageString = [RSMessenger messageWithIdentifier:@"S" arguments:@[[RSUtilities publicIpAddress],[RSUtilities privateIpAddress],[RSUtilities publicIpAddress],[RSUtilities privateIpAddress],fileName,[NSString stringWithFormat:@"%ld",(unsigned long)TTL]]];
+        [[RSDownload sharedInstance].messenger sendUdpMessage:messageString toHostWithPublicAddress:publicIP privateAddress:privateIP tag:0];
     }
 }
 
 + (void)downloadFile:(NSString *)fileName fromPublicAddress:(NSString *)publicAddress privateAddress:(NSString *)privateAddress;
 {
-    [[RSDownload sharedInstance].messenger sendUdpMessage:[RSMessenger messageWithIdentifier:@"DFILE" arguments:@[fileName,[RSUtilities publicIpAddress],[RSUtilities privateIPAddress]]] toHostWithPublicAddress:publicAddress privateAddress:privateAddress tag:0];
+    [[RSDownload sharedInstance].messenger sendUdpMessage:[RSMessenger messageWithIdentifier:@"DFILE" arguments:@[fileName,[RSUtilities publicIpAddress],[RSUtilities privateIpAddress]]] toHostWithPublicAddress:publicAddress privateAddress:privateAddress tag:0];
 }
 
 + (void)addDelegate:(id <RSDownloadDelegate>)delegate
@@ -81,11 +83,6 @@
             [delegate didDownloadFile:fileName];
         }
     }
-}
-
-- (void)didRecieveDataWithType:(NSString *)type arguments:(NSArray *)arguments;
-{
-    
 }
 
 @end

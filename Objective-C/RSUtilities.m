@@ -60,7 +60,7 @@
         for (NSString *dataString in dataArray) {
             NSArray *array = [dataString componentsSeparatedByString:@"|"];
             NSString *ipAddressString = [array objectAtIndex:1];
-            BOOL isOnline = [[array objectAtIndex:1] integerValue];
+            BOOL isOnline = [[array objectAtIndex:2] integerValue];
             if (isOnline) {
                 [neighborArray addObject:ipAddressString];
             }
@@ -108,7 +108,7 @@
     return contactList;
 }
 
-+ (NSString *)privateIPAddress {
++ (NSString *)privateIpAddress {
     NSString *address = @"error";
     struct ifaddrs *interfaces = NULL;
     struct ifaddrs *temp_addr = NULL;
@@ -139,6 +139,16 @@
     NSString *address = [string substringWithRange:NSMakeRange([string rangeOfString:@": "].location + 2, [string rangeOfString:@"</body>"].location - ([string rangeOfString:@": "].location + 2))];
     
     return address;
+}
+
++ (NSString *)publicIpInString:(NSString *)string
+{
+    return [[string componentsSeparatedByString:@","]objectAtIndex:0];
+}
+
++ (NSString *)privateIpInString:(NSString *)string
+{
+    return [[string componentsSeparatedByString:@","]objectAtIndex:1];
 }
 
 + (NSString *)hashFromString:(NSString *)string
@@ -185,10 +195,25 @@
         totalSpace = [fileSystemSizeInBytes unsignedLongLongValue];
         totalFreeSpace = [freeFileSystemSizeInBytes unsignedLongLongValue];
     } else {
-        NSLog(@"Error Obtaining System Memory Info: Domain = %@, Code = %d", [error domain], (long)[error code]);
+        NSLog(@"Error Obtaining System Memory Info: Domain = %@, Code = %ld", [error domain], (long)[error code]);
     }
     
     return totalFreeSpace;
+}
+
++ (NSString *)deviceID
+{
+    return [[NSUserDefaults standardUserDefaults]objectForKey:@"deviceID"];
+}
+
++ (BOOL)ipHasChanged
+{
+    return [[[NSUserDefaults standardUserDefaults]objectForKey:@"lastIPHash"] isEqualToString:[RSUtilities hashFromString:[NSString stringWithFormat:@"%@|%@",[RSUtilities publicIpAddress],[RSUtilities privateIpAddress]]]];
+}
+
++ (void)updateIPHash
+{
+    [[NSUserDefaults standardUserDefaults] setObject:[RSUtilities hashFromString:[NSString stringWithFormat:@"%@|%@",[RSUtilities publicIpAddress],[RSUtilities privateIpAddress]]] forKey:@"lastIPHash"];
 }
 
 @end
