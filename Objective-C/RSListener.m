@@ -61,7 +61,7 @@
         NSString *senderPublicIP = [arguments objectAtIndex:2];
         NSString *senderPrivateIP = [arguments objectAtIndex:3];
         NSString *fileName = [arguments objectAtIndex:4];
-        NSUInteger ttl = [[arguments objectAtIndex:5] integerValue];
+        NSInteger ttl = [[arguments objectAtIndex:5] integerValue];
         ttl -= 1;
         if (ttl > 0) {
             if ([[RSUtilities listOfFilenames]containsObject:fileName]) {
@@ -95,7 +95,7 @@
         }
     }
     else if ([identifier isEqualToString:@"INC"]) {
-        NSUInteger inc = [[arguments objectAtIndex:0] integerValue];
+        NSInteger inc = [[arguments objectAtIndex:0] integerValue];
         NSString *senderPublicIP = [arguments objectAtIndex:1];
         NSString *senderPrivateIP = [arguments objectAtIndex:2];
         NSString *fileName = [arguments objectAtIndex:3];
@@ -113,7 +113,7 @@
             [probIndexContactList addObject:ipAddress];
             [probIndexList addObject:probIndex];
         }
-        NSUInteger senderProbIndex = [[probIndexList objectAtIndex:[probIndexContactList indexOfObject:[NSString stringWithFormat:@"%@,%@",senderPublicIP,senderPrivateIP]]] integerValue];
+        NSInteger senderProbIndex = [[probIndexList objectAtIndex:[probIndexContactList indexOfObject:[NSString stringWithFormat:@"%@,%@",senderPublicIP,senderPrivateIP]]] integerValue];
         senderProbIndex += inc;
         [dataArray replaceObjectAtIndex:[probIndexContactList indexOfObject:[NSString stringWithFormat:@"%@,%@",senderPublicIP,senderPrivateIP]] withObject:[NSString stringWithFormat:@"%@:%ld",[NSString stringWithFormat:@"%@,%@",senderPublicIP,senderPrivateIP],(unsigned long)senderProbIndex]];
         NSString *newProbIndexString = [dataArray componentsJoinedByString:@"/"];
@@ -210,7 +210,7 @@
         NSString *fileName = [arguments objectAtIndex:0];
         NSString *fileOwnerPublicIP = [arguments objectAtIndex:1];
         NSString *fileOwnerPrivateIP = [arguments objectAtIndex:2];
-        NSUInteger timeToLive = [[arguments objectAtIndex:3] integerValue];
+        NSInteger timeToLive = [[arguments objectAtIndex:3] integerValue];
         RSMessenger *message = [RSMessenger messengerWithPort:UPLOAD_PORT];
         [message addDelegate:self];
         [message sendUdpMessage:[RSMessenger messageWithIdentifier:@"ASKFILE" arguments:@[fileName,[RSUtilities publicIpAddress],[RSUtilities privateIpAddress],[NSString stringWithFormat:@"%ld",(unsigned long)timeToLive]]] toHostWithPublicAddress:fileOwnerPublicIP privateAddress:fileOwnerPrivateIP tag:0];
@@ -220,7 +220,7 @@
         NSString *fileName = [arguments objectAtIndex:0];
         NSString *requesterPublicIP = [arguments objectAtIndex:1];
         NSString *requesterPrivateIP = [arguments objectAtIndex:2];
-        NSUInteger timeToLive = [[arguments objectAtIndex:3] integerValue];
+        NSInteger timeToLive = [[arguments objectAtIndex:3] integerValue];
         NSData *data = [NSData dataWithContentsOfFile:[NSString stringWithFormat:@"%@%@",STORED_DATA_DIRECTORY,fileName]];
         NSString *dataString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
         NSString *string = [RSMessenger messageWithIdentifier:@"SENDFILE" arguments:@[fileName,dataString,[NSString stringWithFormat:@"%ld",(unsigned long)timeToLive],requesterPublicIP,requesterPrivateIP]];
@@ -236,7 +236,7 @@
     else if ([identifier isEqualToString:@"SENDFILE"]) {
         NSString *fileName = [arguments objectAtIndex:0];
         NSString *dataString = [arguments objectAtIndex:1];
-        NSUInteger timeToLive = [[arguments objectAtIndex:2] integerValue];
+        NSInteger timeToLive = [[arguments objectAtIndex:2] integerValue];
         NSString *uploaderPublicIP = [arguments objectAtIndex:3];
         NSString *uploaderPrivateIP = [arguments objectAtIndex:4];
         timeToLive -= 1;
@@ -252,7 +252,7 @@
         }
         if (timeToLive > 0) {
             NSArray *contactList = [RSUtilities contactListWithKValue:K_NEIGHBOR];
-            for (NSUInteger i = 0; i < K_UPLOAD; i++) {
+            for (NSInteger i = 0; i < K_UPLOAD; i++) {
                 if (i < contactList.count && ![[contactList objectAtIndex:i] isEqualToString:[NSString stringWithFormat:@"%@,%@",uploaderPublicIP,uploaderPrivateIP]]) {
                     NSString *contactPublicIP = [RSUtilities publicIpInString:[contactList objectAtIndex:i]];
                     NSString *contactPrivateIP = [RSUtilities privateIpInString:[contactList objectAtIndex:i]];

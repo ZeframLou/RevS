@@ -89,7 +89,7 @@
     }
     if (![[NSFileManager defaultManager]fileExistsAtPath:PROB_INDEX_PATH]) {
         NSMutableArray *probArray = [NSMutableArray array];
-        for (NSUInteger i = 0; i < NEIGHBOR_COUNT; i++) {
+        for (NSInteger i = 0; i < NEIGHBOR_COUNT; i++) {
             if (i < [RSUtilities localIpList].count) {
                 [probArray addObject:[NSString stringWithFormat:@"%@:%ld",[[RSUtilities localIpList]objectAtIndex:i],(unsigned long)INITIAL_PROB_INDEX]];
             }

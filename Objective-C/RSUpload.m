@@ -50,7 +50,7 @@
 {
     NSArray *contactList = [RSUtilities onlineNeighbors];
     
-    for (NSUInteger i = 0; i < K_UPLOAD; i++) {
+    for (NSInteger i = 0; i < K_UPLOAD; i++) {
         if (i < contactList.count) {
             NSString *publicAddress = [RSUtilities publicIpInString:[contactList objectAtIndex:i]];
             NSString *privateAddress = [RSUtilities privateIpInString:[contactList objectAtIndex:i]];

@@ -45,7 +45,7 @@
 /*
   Returns the neighbors with the highest probability value.The "k" value is the count of the addresses you want.
 */
-+ (NSArray *)contactListWithKValue:(NSUInteger)k;
++ (NSArray *)contactListWithKValue:(NSInteger)k;
 
 /*
   Returns the local IP address in the local network.(Possibly something like 192.168.0.101)

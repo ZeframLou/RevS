@@ -116,7 +116,7 @@
 + (NSString *)messageWithIdentifier:(NSString *)identifier arguments:(NSArray *)arguments
 {
     NSString *message = [NSString stringWithFormat:@"ID{%@}|ARG{",identifier];
-    NSUInteger i = 0;
+    NSInteger i = 0;
     for (NSString *argument in arguments) {
         message = [message stringByAppendingString:argument];
         if (i != arguments.count - 1) {

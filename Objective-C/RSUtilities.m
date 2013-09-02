@@ -69,7 +69,7 @@
     return neighborArray;
 }
 
-+ (NSArray *)contactListWithKValue:(NSUInteger)k
++ (NSArray *)contactListWithKValue:(NSInteger)k
 {
     NSArray *ipList = [RSUtilities onlineNeighbors];
     
@@ -96,7 +96,7 @@
     NSArray *sortedIndexList = [probIndexList sortedArrayUsingSelector:@selector(compare:)];
     //sortedIndexList is the sorted version of probIndexList in an ascending order.
     NSArray *indexList = [sortedIndexList subarrayWithRange:NSMakeRange(sortedIndexList.count - k, k)];
-    for (NSUInteger i = 0; i < dataArray.count; i++) {
+    for (NSInteger i = 0; i < dataArray.count; i++) {
         if (contactList.count == k) {
             break;
         }
