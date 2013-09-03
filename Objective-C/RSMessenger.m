@@ -61,6 +61,7 @@
         messenger.remotePublicAddress = [NSString string];
         messenger.remotePrivateAddress = [NSString string];
         messenger.connectedAddress = [NSString string];
+        messenger.messageString = [NSString string];
     //}
     return messenger;
 }
@@ -87,6 +88,7 @@
 - (void)sendUdpMessage:(NSString *)message toHostWithPublicAddress:(NSString *)publicAddress privateAddress:(NSString *)privateAddress tag:(NSInteger)tag
 {
     self.tag = tag;
+    messageString = message;
     if (!connected) {
         remotePublicAddress = publicAddress;
         remotePrivateAddress = privateAddress;
@@ -103,7 +105,7 @@
 - (void)sendServerMessage:(NSString *)message toServerAddress:(NSString *)serverAddress tag:(NSInteger)tag
 {
     self.tag = tag;
-    [udpSocket sendData:[NSData encryptString:messageString withKey:MESSAGE_CODE] toHost:SERVER_IP port:port withTimeout:30 tag:0];
+    [udpSocket sendData:[NSData encryptString:message withKey:MESSAGE_CODE] toHost:serverAddress port:port withTimeout:30 tag:0];
 }
 
 - (void)addDelegate:(id <RSMessengerDelegate>)delegate
@@ -130,7 +132,8 @@
 
 + (NSString *)identifierOfMessage:(NSString *)message
 {
-    return [[message substringFromIndex:3] substringToIndex:[message rangeOfString:@"}|ARG{"].location];
+    NSString *string = [message substringFromIndex:3];
+    return [string substringToIndex:[string rangeOfString:@"}|ARG{"].location];
 }
 
 + (NSArray *)argumentsOfMessage:(NSString *)message
@@ -263,6 +266,7 @@
         connected = YES;
     }
     NSString *messageString = [NSData decryptData:data withKey:MESSAGE_CODE];
+    NSLog(@"%@",messageString);
     messageString = [messageString substringToIndex:messageString.length - 1];
     NSString *messageIdentifier = [RSMessenger identifierOfMessage:messageString];
     NSArray *messageArguments = [RSMessenger argumentsOfMessage:messageString];
