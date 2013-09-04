@@ -26,6 +26,8 @@
 #import <ifaddrs.h>
 #import <arpa/inet.h>
 
+static NSMutableArray *connectedAddresses;
+
 @interface RSUtilities () <RSMessengerDelegate>
 
 @end
@@ -214,6 +216,30 @@
 + (void)updateIPHash
 {
     [[NSUserDefaults standardUserDefaults] setObject:[RSUtilities hashFromString:[NSString stringWithFormat:@"%@|%@",[RSUtilities publicIpAddress],[RSUtilities privateIpAddress]]] forKey:@"lastIPHash"];
+}
+
++ (NSArray *)connectedAddresses
+{
+    if (!connectedAddresses) {
+        connectedAddresses = [NSMutableArray array];
+    }
+    return connectedAddresses;
+}
+
++ (void)addConnectedAddress:(NSString *)address
+{
+    if (!connectedAddresses) {
+        connectedAddresses = [NSMutableArray array];
+    }
+    [connectedAddresses addObject:address];
+}
+
++ (void)removeConnectedAddress:(NSString *)address;
+{
+    if (!connectedAddresses) {
+        connectedAddresses = [NSMutableArray array];
+    }
+    [connectedAddresses removeObject:address];
 }
 
 @end

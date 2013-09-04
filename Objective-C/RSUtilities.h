@@ -98,4 +98,19 @@
 */
 + (void)updateIPHash;
 
+/*
+ 
+*/
++ (NSArray *)connectedAddresses;
+
+/*
+ 
+*/
++ (void)addConnectedAddress:(NSString *)address;
+
+/*
+
+*/
++ (void)removeConnectedAddress:(NSString *)address;
+
 @end

@@ -36,15 +36,14 @@
 @property (nonatomic,strong) NSString *messageString;
 //@property (nonatomic,strong) GCDAsyncSocket *tcpSocket;
 @property (nonatomic,strong) GCDAsyncUdpSocket *udpSocket;
-@property (nonatomic) BOOL connected;
-@property (nonatomic) BOOL isConnectionReciever;
+@property (nonatomic) BOOL isConnectionEstablisher;
 @property (nonatomic,strong) NSTimer *keepAliveTimer;
 
 @end
 
 @implementation RSMessenger
 
-@synthesize delegates,tag,port,remotePublicAddress,remotePrivateAddress,connectedAddress,messageString,udpSocket,connected,isConnectionReciever,keepAliveTimer;
+@synthesize delegates,tag,port,remotePublicAddress,remotePrivateAddress,connectedAddress,messageString,udpSocket,isConnectionEstablisher,keepAliveTimer;
 
 + (RSMessenger *)messengerWithPort:(uint16_t)port
 {
@@ -89,13 +88,11 @@
 {
     self.tag = tag;
     messageString = message;
-    if (!connected) {
+    if (![[RSUtilities connectedAddresses]containsObject:publicAddress] && ![[RSUtilities connectedAddresses]containsObject:privateAddress]) {
         remotePublicAddress = publicAddress;
         remotePrivateAddress = privateAddress;
+        isConnectionEstablisher = YES;
         [udpSocket sendData:[NSData encryptString:[RSMessenger messageWithIdentifier:@"CONS" arguments:@[[RSUtilities publicIpAddress],[RSUtilities privateIpAddress],publicAddress,privateAddress]] withKey:MESSAGE_CODE] toHost:SERVER_IP port:port withTimeout:30 tag:0];
-        
-        [udpSocket sendData:[NSData encryptString:[RSMessenger messageWithIdentifier:@"PHOLE" arguments:@[]] withKey:MESSAGE_CODE] toHost:publicAddress port:port withTimeout:30 tag:PUBLIC_ADDRESS_TAG];
-        [udpSocket sendData:[NSData encryptString:[RSMessenger messageWithIdentifier:@"PHOLE" arguments:@[]] withKey:MESSAGE_CODE] toHost:privateAddress port:port withTimeout:30 tag:PRIVATE_ADDRESS_TAG];
     }
     else {
         [udpSocket sendData:[NSData encryptString:messageString withKey:MESSAGE_CODE] toHost:connectedAddress port:port withTimeout:30 tag:0];
@@ -228,18 +225,18 @@
 {
     if ((tag == PUBLIC_ADDRESS_TAG) || (tag == PRIVATE_ADDRESS_TAG)) {
         //Connection established
-        connected = YES;
         if (tag == PUBLIC_ADDRESS_TAG) {
             connectedAddress = remotePublicAddress;
         }
         else if (tag == PRIVATE_ADDRESS_TAG) {
             connectedAddress = remotePrivateAddress;
         }
+        [RSUtilities addConnectedAddress:connectedAddress];
         [udpSocket sendData:[NSData encryptString:messageString withKey:MESSAGE_CODE] toHost:connectedAddress port:port withTimeout:30 tag:0];
     }
     else
     {
-        if (!isConnectionReciever) {
+        if (isConnectionEstablisher) {
             if (!keepAliveTimer.isValid) {
                 [self startKeepAliveMessages];
             }
@@ -262,20 +259,23 @@
 
 - (void)udpSocket:(GCDAsyncUdpSocket *)sock didReceiveData:(NSData *)data fromAddress:(NSData *)address withFilterContext:(id)filterContext
 {
-    if (!connected) {
-        connected = YES;
-    }
     NSString *messageString = [NSData decryptData:data withKey:MESSAGE_CODE];
-    NSLog(@"%@",messageString);
     messageString = [messageString substringToIndex:messageString.length - 1];
     NSString *messageIdentifier = [RSMessenger identifierOfMessage:messageString];
     NSArray *messageArguments = [RSMessenger argumentsOfMessage:messageString];
     if ([messageIdentifier isEqualToString:@"CONC"]) {
-        isConnectionReciever = YES;
         NSString *publicAddress = [messageArguments objectAtIndex:0];
         NSString *privateAddress = [messageArguments objectAtIndex:1];
-        [udpSocket sendData:[NSData encryptString:[RSMessenger messageWithIdentifier:@"PHOLE" arguments:@[]] withKey:MESSAGE_CODE] toHost:publicAddress port:MESSAGE_PORT withTimeout:30 tag:PUBLIC_ADDRESS_TAG];
-        [udpSocket sendData:[NSData encryptString:[RSMessenger messageWithIdentifier:@"PHOLE" arguments:@[]] withKey:MESSAGE_CODE] toHost:privateAddress port:MESSAGE_PORT withTimeout:30 tag:PRIVATE_ADDRESS_TAG];
+        [udpSocket sendData:[NSData encryptString:[RSMessenger messageWithIdentifier:@"PHOLE" arguments:@[[RSUtilities publicIpAddress],[RSUtilities privateIpAddress]]] withKey:MESSAGE_CODE] toHost:publicAddress port:MESSAGE_PORT withTimeout:30 tag:PUBLIC_ADDRESS_TAG];
+        [udpSocket sendData:[NSData encryptString:[RSMessenger messageWithIdentifier:@"PHOLE" arguments:@[[RSUtilities publicIpAddress],[RSUtilities privateIpAddress]]] withKey:MESSAGE_CODE] toHost:privateAddress port:MESSAGE_PORT withTimeout:30 tag:PRIVATE_ADDRESS_TAG];
+    }
+    else if ([messageIdentifier isEqualToString:@"PHOLE"])
+    {
+        NSString *publicAddress = [messageArguments objectAtIndex:0];
+        NSString *privateAddress = [messageArguments objectAtIndex:1];
+        if (![[RSUtilities connectedAddresses]containsObject:publicAddress] && ![[RSUtilities connectedAddresses]containsObject:privateAddress]) {
+            [RSUtilities addConnectedAddress:[GCDAsyncUdpSocket hostFromAddress:address]];
+        }
     }
     else
     {
@@ -291,8 +291,8 @@
 
 - (void)udpSocketDidClose:(GCDAsyncUdpSocket *)sock withError:(NSError *)error
 {
-    connected = NO;
-    isConnectionReciever = NO;
+    [RSUtilities removeConnectedAddress:connectedAddress];
+    isConnectionEstablisher = NO;
 }
 
 @end

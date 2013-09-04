@@ -26,15 +26,21 @@
 
 @interface RSNodeManage () <RSMessengerDelegate>
 
+@property (nonatomic,strong) NSTimer *keepAliveTimer;
+@property (nonatomic,strong) RSMessenger *keepAliveMessenger;
+
 @end
 
 @implementation RSNodeManage
+
+@synthesize keepAliveTimer,keepAliveMessenger;
 
 + (RSNodeManage *)sharedInstance
 {
     static RSNodeManage *sharedInstance;
     if (!sharedInstance) {
         sharedInstance = [[RSNodeManage alloc]init];
+        sharedInstance.keepAliveMessenger = [RSMessenger messengerWithPort:MESSAGE_PORT];
     }
     return sharedInstance;
 }
@@ -71,6 +77,7 @@
             [message sendServerMessage:[RSMessenger messageWithIdentifier:@"JOIN" arguments:@[[RSUtilities deviceID],[RSUtilities publicIpAddress],[RSUtilities privateIpAddress]]] toServerAddress:SERVER_IP tag:0];
         }
     }
+    [[RSNodeManage sharedInstance]startKeepAliveMessages];
 }
 
 + (void)quit
@@ -80,6 +87,7 @@
         [message addDelegate:[RSNodeManage sharedInstance]];
         [message sendServerMessage:[RSMessenger messageWithIdentifier:@"QUIT" arguments:@[[RSUtilities deviceID],[RSUtilities publicIpAddress],[RSUtilities privateIpAddress]]] toServerAddress:SERVER_IP tag:0];
     }
+    [[RSNodeManage sharedInstance]stopKeepAliveMessages];
 }
 
 + (void)initFiles
@@ -98,6 +106,21 @@
         NSData *encryptedString = [NSData encryptString:probIndexString withKey:MESSAGE_CODE];
         [encryptedString writeToFile:PROB_INDEX_PATH atomically:YES];
     }
+}
+
+- (void)startKeepAliveMessages
+{
+    keepAliveTimer = [NSTimer scheduledTimerWithTimeInterval:KEEP_ALIVE_INTERVAL target:self selector:@selector(sendKeepAliveMessage) userInfo:nil repeats:YES];
+}
+
+- (void)stopKeepAliveMessages
+{
+    [keepAliveTimer invalidate];
+}
+
+- (void)sendKeepAliveMessage
+{
+    [keepAliveMessenger sendServerMessage:[RSMessenger messageWithIdentifier:@"ALIVE" arguments:@[]] toServerAddress:SERVER_IP tag:0];
 }
 
 #pragma mark - RSMessageDelegate
