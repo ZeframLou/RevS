@@ -49,6 +49,11 @@
 */
 - (void)sendServerMessage:(NSString *)message toServerAddress:(NSString *)serverAddress tag:(NSInteger)tag;
 
+/*
+  Close all of the messenger's connections.Note:if the messenger is sending data when you call this method,the connection will be closed after the data has been sent.
+*/
+- (void)closeConnection;
+
 - (void)addDelegate:(id <RSMessengerDelegate>)delegate;
 /*
   Returns a formatted message following the RevS Message Protocol(RSMP).Visit https://github.com/theGreatLzbdd/RevS/wiki/RevS-Message-Protocol to learn more.
@@ -80,5 +85,15 @@
   Called when the messenger wrote data on a remote storage.The tag argument is for your own convenience,you can use it as an array index,identifier,etc.
 */
 - (void)messenger:(RSMessenger *)messenger didWriteDataWithTag:(NSInteger)tag;
+
+/*
+  Called when the messenger's connection has been closed.If the connection was closed by calling closeConnection,the "error" value will be nil.
+*/
+- (void)messenger:(RSMessenger *)messenger connectionDidCloseWithError:(NSError *)error;
+
+/*
+  Called if a message was not sent successfully.
+*/
+- (void)messenger:(RSMessenger *)messenger didNotSendDataWithTag:(NSInteger)tag error:(NSError *)error;
 
 @end

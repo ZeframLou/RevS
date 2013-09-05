@@ -105,6 +105,11 @@
     [udpSocket sendData:[NSData encryptString:message withKey:MESSAGE_CODE] toHost:serverAddress port:port withTimeout:30 tag:0];
 }
 
+- (void)closeConnection
+{
+    [udpSocket closeAfterSending];
+}
+
 - (void)addDelegate:(id <RSMessengerDelegate>)delegate
 {
     if (![delegates containsObject:delegate]) {
@@ -291,8 +296,27 @@
 
 - (void)udpSocketDidClose:(GCDAsyncUdpSocket *)sock withError:(NSError *)error
 {
+    [self stopKeepAliveMessages];
     [RSUtilities removeConnectedAddress:connectedAddress];
     isConnectionEstablisher = NO;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        for (id delegate in delegates) {
+            if ([delegate respondsToSelector:@selector(messenger:connectionDidCloseWithError:)]) {
+                [delegate messenger:self connectionDidCloseWithError:error];
+            }
+        }
+    });
+}
+
+- (void)udpSocket:(GCDAsyncUdpSocket *)sock didNotSendDataWithTag:(long)tag dueToError:(NSError *)error
+{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        for (id delegate in delegates) {
+            if ([delegate respondsToSelector:@selector(messenger:didNotSendDataWithTag:error:)]) {
+                [delegate messenger:self didNotSendDataWithTag:self.tag error:error];
+            }
+        }
+    });
 }
 
 @end
