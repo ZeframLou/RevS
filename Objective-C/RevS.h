@@ -28,9 +28,17 @@
 #import "RSUpload.h"
 #import "RSDownload.h"
 #import "RSNodeManage.h"
-#import "RSListener.h"
 #import "RSUtilities.h"
 #import "GCDAsyncSocket.h"
 #import "GCDAsyncUdpSocket.h"
 #import "NSData+AES.h"
 #import "RSMessenger.h"
+#import "RSPortMapper.h"
+
+enum RSNatTier {
+    RSTierNoNatOrNatPmp = 1,
+    RSTierUdpHolePunching,
+    RSTierRelay
+};
+typedef NSUInteger RSNatTier;
+static RSNatTier NAT_TIER;

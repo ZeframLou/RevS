@@ -28,7 +28,6 @@
 /*
   This class implements the basic network functions,like joining and leaving the network.
 */
-
 @interface RSNodeManage : NSObject
 
 /*

@@ -28,8 +28,15 @@
 @protocol RSUploadDelegate <NSObject>
 
 @optional
-
+/*
+ Called after a file is uploaded.
+ */
 - (void)didUploadFile:(NSString *)fileName;
+
+/*
+ Called after an upload request failed.
+ */
+- (void)uploadDidFail;
 
 @end
 
@@ -48,7 +55,7 @@
 /*
   Send a file to a specific host.
 */
-+ (void)uploadFile:(NSString *)fileName toPublicAddress:(NSString *)publicAddress privateAddress:(NSString *)privateAddress;
++ (void)uploadFile:(NSString *)fileName toAddress:(NSString *)publicAddress;
 
 + (void)addDelegate:(id <RSUploadDelegate>)delegate;
 

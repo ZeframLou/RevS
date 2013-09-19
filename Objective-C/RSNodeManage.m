@@ -24,7 +24,7 @@
 
 #import "RevS.h"
 
-@interface RSNodeManage () <RSMessengerDelegate>
+@interface RSNodeManage () <RSMessengerDelegate,RSPortMapperDelegate>
 
 @property (nonatomic,strong) NSTimer *keepAliveTimer;
 @property (nonatomic,strong) RSMessenger *keepAliveMessenger;
@@ -49,35 +49,20 @@
 {
     RSMessenger *message = [RSMessenger messengerWithPort:MESSAGE_PORT];
     [message addDelegate:[RSNodeManage sharedInstance]];
-    [message sendServerMessage:[RSMessenger messageWithIdentifier:@"BOOTSTRAP" arguments:@[[RSUtilities deviceID],[RSUtilities publicIpAddress],[RSUtilities privateIpAddress]]] toServerAddress:SERVER_IP tag:0];
+    [message sendServerMessage:[RSMessenger messageWithIdentifier:@"BOOTSTRAP" arguments:@[[RSUtilities deviceID],[RSUtilities publicIpAddress]]] toServerAddress:SERVER_IP tag:0];
 }
 
 + (void)join
 {
-    NSArray *localIPList = [RSUtilities localIpList];
-    if (localIPList.count == 0) {
-        NSString *deviceHash = [RSUtilities hashFromString:[NSString stringWithFormat:@"%@|%@",[RSUtilities publicIpAddress],[RSUtilities privateIpAddress]]];
-        [[NSUserDefaults standardUserDefaults]setObject:deviceHash forKey:@"deviceID"];
-        [[NSUserDefaults standardUserDefaults]setObject:deviceHash forKey:@"lastIPHash"];
-        [self downloadIPList];
+    if ([[RSUtilities publicIpAddress] isEqualToString:[RSUtilities privateIpAddress]]) {
+        NAT_TIER = RSTierNoNatOrNatPmp;
     }
-    else {
-        [self initFiles];
-        for (NSString *string in localIPList) {
-            NSString *publicAddress = [RSUtilities publicIpInString:string];
-            NSString *privateAddress = [RSUtilities privateIpInString:string];
-            RSMessenger *message = [RSMessenger messengerWithPort:MESSAGE_PORT];
-            [message addDelegate:[RSNodeManage sharedInstance]];
-            [message sendUdpMessage:[RSMessenger messageWithIdentifier:@"JOIN" arguments:@[[RSUtilities deviceID],[RSUtilities publicIpAddress],[RSUtilities privateIpAddress]]] toHostWithPublicAddress:publicAddress privateAddress:privateAddress tag:0];
-        }
-        if ([RSUtilities ipHasChanged]) {
-            [RSUtilities updateIPHash];
-            RSMessenger *message = [RSMessenger messengerWithPort:MESSAGE_PORT];
-            [message addDelegate:[RSNodeManage sharedInstance]];
-            [message sendServerMessage:[RSMessenger messageWithIdentifier:@"JOIN" arguments:@[[RSUtilities deviceID],[RSUtilities publicIpAddress],[RSUtilities privateIpAddress]]] toServerAddress:SERVER_IP tag:0];
-        }
+    else
+    {
+        [RSPortMapper addDelegate:[RSNodeManage sharedInstance]];
+        [RSPortMapper addMapperWithPort:MESSAGE_PORT];
+        [RSPortMapper start];
     }
-    [[RSNodeManage sharedInstance]startKeepAliveMessages];
 }
 
 + (void)quit
@@ -85,9 +70,35 @@
     for (NSString *ip in [RSUtilities localIpList]) {
         RSMessenger *message = [RSMessenger messengerWithPort:MESSAGE_PORT];
         [message addDelegate:[RSNodeManage sharedInstance]];
-        [message sendServerMessage:[RSMessenger messageWithIdentifier:@"QUIT" arguments:@[[RSUtilities deviceID],[RSUtilities publicIpAddress],[RSUtilities privateIpAddress]]] toServerAddress:SERVER_IP tag:0];
+        [message sendServerMessage:[RSMessenger messageWithIdentifier:@"QUIT" arguments:@[[RSUtilities deviceID],[RSUtilities publicIpAddress]]] toServerAddress:SERVER_IP tag:0];
     }
     [[RSNodeManage sharedInstance]stopKeepAliveMessages];
+    [RSPortMapper stop];
+}
+
++ (void)sendJoinMessages
+{
+    NSArray *localIPList = [RSUtilities localIpList];
+    if (localIPList.count == 0) {
+        NSString *deviceHash = [RSUtilities hashFromString:[RSUtilities publicIpAddress]];
+        [[NSUserDefaults standardUserDefaults]setObject:deviceHash forKey:@"deviceID"];
+        [[NSUserDefaults standardUserDefaults]setObject:deviceHash forKey:@"lastIPHash"];
+        [self downloadIPList];
+    }
+    else {
+        [self initFiles];
+        for (NSString *ip in localIPList) {
+            RSMessenger *message = [RSMessenger messengerWithPort:MESSAGE_PORT];
+            [message addDelegate:[RSNodeManage sharedInstance]];
+            [message sendUdpMessage:[RSMessenger messageWithIdentifier:@"JOIN" arguments:@[[RSUtilities deviceID],[RSUtilities publicIpAddress]]] toHost:ip tag:0];
+        }
+        if ([RSUtilities ipHasChanged]) {
+            [RSUtilities updateIPHash];
+        }
+        RSMessenger *message = [RSMessenger messengerWithPort:MESSAGE_PORT];
+        [message addDelegate:[RSNodeManage sharedInstance]];
+        [message sendServerMessage:[RSMessenger messageWithIdentifier:@"JOIN&GET_NEIGHBOR_STATUS" arguments:@[[RSUtilities deviceID],[RSUtilities publicIpAddress]]] toServerAddress:SERVER_IP tag:0];
+    }
 }
 
 + (void)initFiles
@@ -123,26 +134,73 @@
     [keepAliveMessenger sendServerMessage:[RSMessenger messageWithIdentifier:@"ALIVE" arguments:@[]] toServerAddress:SERVER_IP tag:0];
 }
 
+#pragma mark - RSPortMapperDelegate
+
+- (void)mapperDidMapWithSuccess:(BOOL)success
+{
+    if (!success) {
+        [[RSNodeManage sharedInstance]startKeepAliveMessages];
+    }
+    [RSNodeManage sendJoinMessages];
+}
+
 #pragma mark - RSMessageDelegate
 
 - (void)messenger:(RSMessenger *)messenger didRecieveMessageWithIdentifier:(NSString *)identifier arguments:(NSArray *)arguments tag:(NSInteger)tag
 {
     if ([identifier isEqualToString:@"IPLIST"]) {
-        NSString *listString = [arguments lastObject];
-        NSData *encryptedList = [NSData encryptString:listString withKey:MESSAGE_CODE];
-        [encryptedList writeToFile:IP_LIST_PATH atomically:YES];
-        NSArray *ipList = [RSUtilities localIpList];
-        for (NSString *string in ipList) {
-            NSString *publicAddress = [RSUtilities publicIpInString:string];
-            NSString *privateAddress = [RSUtilities privateIpInString:string];
+        if ([RSUtilities localIpList].count == 0) {
+            NSString *listString = [arguments lastObject];
+            NSData *encryptedList = [NSData encryptString:listString withKey:MESSAGE_CODE];
+            [encryptedList writeToFile:IP_LIST_PATH atomically:YES];
+            NSArray *ipList = [RSUtilities localIpList];
+            for (NSString *ip in ipList) {
+                RSMessenger *message = [RSMessenger messengerWithPort:MESSAGE_PORT];
+                [message addDelegate:[RSNodeManage sharedInstance]];
+                [message sendUdpMessage:[RSMessenger messageWithIdentifier:@"JOIN" arguments:@[[RSUtilities deviceID],[RSUtilities publicIpAddress]]] toHost:ip tag:0];
+            }
             RSMessenger *message = [RSMessenger messengerWithPort:MESSAGE_PORT];
-            [message addDelegate:[RSNodeManage sharedInstance]];
-            [message sendUdpMessage:[RSMessenger messageWithIdentifier:@"JOIN" arguments:@[[RSUtilities deviceID],[RSUtilities publicIpAddress],[RSUtilities privateIpAddress]]] toHostWithPublicAddress:publicAddress privateAddress:privateAddress tag:0];
+            [message addDelegate:self];
+            [message sendServerMessage:[RSMessenger messageWithIdentifier:@"JOIN" arguments:@[[RSUtilities deviceID],[RSUtilities publicIpAddress]]] toServerAddress:SERVER_IP tag:0];
+            [RSNodeManage initFiles];
         }
-        RSMessenger *message = [RSMessenger messengerWithPort:MESSAGE_PORT];
-        [message addDelegate:self];
-        [message sendServerMessage:[RSMessenger messageWithIdentifier:@"JOIN" arguments:@[[RSUtilities deviceID],[RSUtilities publicIpAddress],[RSUtilities privateIpAddress]]] toServerAddress:SERVER_IP tag:0];
-        [RSNodeManage initFiles];
+        else {
+            NSString *listString = [arguments lastObject];
+            NSData *encryptedList = [NSData encryptString:listString withKey:MESSAGE_CODE];
+            [encryptedList writeToFile:IP_LIST_PATH atomically:YES];
+        }
+    }
+    else if ([identifier isEqualToString:@"JOIN"]) {
+        NSString *deviceHash = [arguments objectAtIndex:0];
+        NSString *publicIP = [arguments objectAtIndex:1];
+        NSString *dataString = [NSData decryptData:[NSData dataWithContentsOfFile:IP_LIST_PATH] withKey:FILE_CODE];
+        NSMutableArray *dataArray = [NSMutableArray arrayWithArray:[dataString componentsSeparatedByString:@";"]];
+        for (NSString *string in dataArray) {
+            NSArray *array = [string componentsSeparatedByString:@"|"];
+            NSString *hash = [array objectAtIndex:0];
+            if ([deviceHash isEqualToString:hash]) {
+                NSString *newDataString = [NSString stringWithFormat:@"%@|%@|1",hash,publicIP];
+                [dataArray replaceObjectAtIndex:[dataArray indexOfObject:string] withObject:newDataString];
+            }
+        }
+        NSString *ipListString = [dataArray componentsJoinedByString:@";"];
+        [[NSData encryptString:ipListString withKey:FILE_CODE]writeToFile:IP_LIST_PATH atomically:YES];
+    }
+    else if ([identifier isEqualToString:@"QUIT"]) {
+        NSString *deviceHash = [arguments objectAtIndex:0];
+        NSString *publicIP = [arguments objectAtIndex:1];
+        NSString *dataString = [NSData decryptData:[NSData dataWithContentsOfFile:IP_LIST_PATH] withKey:FILE_CODE];
+        NSMutableArray *dataArray = [NSMutableArray arrayWithArray:[dataString componentsSeparatedByString:@";"]];
+        for (NSString *string in dataArray) {
+            NSArray *array = [string componentsSeparatedByString:@"|"];
+            NSString *hash = [array objectAtIndex:0];
+            if ([deviceHash isEqualToString:hash]) {
+                NSString *newDataString = [NSString stringWithFormat:@"%@|%@|0",hash,publicIP];
+                [dataArray replaceObjectAtIndex:[dataArray indexOfObject:string] withObject:newDataString];
+            }
+        }
+        NSString *ipListString = [dataArray componentsJoinedByString:@";"];
+        [[NSData encryptString:ipListString withKey:FILE_CODE]writeToFile:IP_LIST_PATH atomically:YES];
     }
 }
 

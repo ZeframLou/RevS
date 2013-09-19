@@ -111,46 +111,46 @@ static NSMutableArray *connectedAddresses;
 }
 
 + (NSString *)privateIpAddress {
-    NSString *address = @"error";
-    struct ifaddrs *interfaces = NULL;
-    struct ifaddrs *temp_addr = NULL;
-    int success = 0;
-    // retrieve the current interfaces - returns 0 on success
-    success = getifaddrs(&interfaces);
-    if (success == 0) {
-        // Loop through linked list of interfaces
-        temp_addr = interfaces;
-        while(temp_addr != NULL) {
-            if(temp_addr->ifa_addr->sa_family == AF_INET) {
-                // Check if interface is en0 which is the wifi connection on the iPhone
-                if([[NSString stringWithUTF8String:temp_addr->ifa_name] isEqualToString:@"en0"]) {
-                    // Get NSString from C String
-                    address = [NSString stringWithUTF8String:inet_ntoa(((struct sockaddr_in *)temp_addr->ifa_addr)->sin_addr)];
+    NSString *ip;
+    if (TARGET_OS_MAC) {
+        ip = [RSPortMapper privateAddress];
+    } 
+    if (!ip) {
+        ip = @"error";
+        struct ifaddrs *interfaces = NULL;
+        struct ifaddrs *temp_addr = NULL;
+        int success = 0;
+        // retrieve the current interfaces - returns 0 on success
+        success = getifaddrs(&interfaces);
+        if (success == 0) {
+            // Loop through linked list of interfaces
+            temp_addr = interfaces;
+            while(temp_addr != NULL) {
+                if(temp_addr->ifa_addr->sa_family == AF_INET) {
+                    // Check if interface is en0 which is the wifi connection on the iPhone
+                    if([[NSString stringWithUTF8String:temp_addr->ifa_name] isEqualToString:@"en0"]) {
+                        // Get NSString from C String
+                        ip = [NSString stringWithUTF8String:inet_ntoa(((struct sockaddr_in *)temp_addr->ifa_addr)->sin_addr)];
+                    }
                 }
+                temp_addr = temp_addr->ifa_next;
             }
-            temp_addr = temp_addr->ifa_next;
         }
+        // Free memory
+        freeifaddrs(interfaces);
     }
-    // Free memory
-    freeifaddrs(interfaces);
-    return address;
+    
+    return ip;
 }
 
 + (NSString *)publicIpAddress {
-    NSString *string = [NSString stringWithContentsOfURL:[NSURL URLWithString:@"http://checkip.dyndns.org"] encoding:NSUTF8StringEncoding error:nil];
-    NSString *address = [string substringWithRange:NSMakeRange([string rangeOfString:@": "].location + 2, [string rangeOfString:@"</body>"].location - ([string rangeOfString:@": "].location + 2))];
+    NSString *address = [RSPortMapper publicAddress];
+    if (!address) {
+        NSString *string = [NSString stringWithContentsOfURL:[NSURL URLWithString:@"http://checkip.dyndns.org"] encoding:NSUTF8StringEncoding error:nil];
+        address = [string substringWithRange:NSMakeRange([string rangeOfString:@": "].location + 2, [string rangeOfString:@"</body>"].location - ([string rangeOfString:@": "].location + 2))];
+    }
     
     return address;
-}
-
-+ (NSString *)publicIpInString:(NSString *)string
-{
-    return [[string componentsSeparatedByString:@","]objectAtIndex:0];
-}
-
-+ (NSString *)privateIpInString:(NSString *)string
-{
-    return [[string componentsSeparatedByString:@","]objectAtIndex:1];
 }
 
 + (NSString *)hashFromString:(NSString *)string
@@ -210,12 +210,12 @@ static NSMutableArray *connectedAddresses;
 
 + (BOOL)ipHasChanged
 {
-    return [[[NSUserDefaults standardUserDefaults]objectForKey:@"lastIPHash"] isEqualToString:[RSUtilities hashFromString:[NSString stringWithFormat:@"%@|%@",[RSUtilities publicIpAddress],[RSUtilities privateIpAddress]]]];
+    return [[[NSUserDefaults standardUserDefaults]objectForKey:@"lastIPHash"] isEqualToString:[RSUtilities hashFromString:[RSUtilities publicIpAddress]]];
 }
 
 + (void)updateIPHash
 {
-    [[NSUserDefaults standardUserDefaults] setObject:[RSUtilities hashFromString:[NSString stringWithFormat:@"%@|%@",[RSUtilities publicIpAddress],[RSUtilities privateIpAddress]]] forKey:@"lastIPHash"];
+    [[NSUserDefaults standardUserDefaults] setObject:[RSUtilities hashFromString:[RSUtilities publicIpAddress]] forKey:@"lastIPHash"];
 }
 
 + (NSArray *)connectedAddresses
@@ -231,7 +231,9 @@ static NSMutableArray *connectedAddresses;
     if (!connectedAddresses) {
         connectedAddresses = [NSMutableArray array];
     }
-    [connectedAddresses addObject:address];
+    if (![connectedAddresses containsObject:address]) {
+        [connectedAddresses addObject:address];
+    }
 }
 
 + (void)removeConnectedAddress:(NSString *)address;

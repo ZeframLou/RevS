@@ -42,7 +42,7 @@
 /*
   Download a file from a specific address.
 */
-+ (void)downloadFile:(NSString *)fileName fromPublicAddress:(NSString *)publicAddress privateAddress:(NSString *)privateAddress;
++ (void)downloadFile:(NSString *)fileName fromAddress:(NSString *)publicAddress;
 
 + (void)addDelegate:(id <RSDownloadDelegate>)delegate;
 
@@ -56,5 +56,10 @@
   Called after a file is downloaded.
 */
 - (void)didDownloadFile:(NSString *)fileName;
+
+/*
+  Called after a download request failed.
+*/
+- (void)downloadDidFail;
 
 @end

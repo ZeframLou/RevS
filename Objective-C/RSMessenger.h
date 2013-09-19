@@ -42,10 +42,10 @@
   Send a message to the specified host.This method uses udp hole punching in order to bypass the NAT.The tag argument is for your own convenience,you can use it as an array index,identifier,etc.
 */
 //- (void)sendTcpMessage:(NSString *)message toHost:(NSString *)host tag:(NSInteger)tag;
-- (void)sendUdpMessage:(NSString *)message toHostWithPublicAddress:(NSString *)publicAddress privateAddress:(NSString *)privateAddress tag:(NSInteger)tag;
+- (void)sendUdpMessage:(NSString *)message toHost:(NSString *)publicAddress tag:(NSInteger)tag;
 
 /*
-  Send a message to the server.The difference between this method and sendUdpMethod:toHostWithPublicAddress:privateAddress:tag: is that this method doesn't use udp hole punching.
+  Send a message to the server.The difference between this method and sendUdpMethod:toHost:tag: is that this method doesn't use udp hole punching.
 */
 - (void)sendServerMessage:(NSString *)message toServerAddress:(NSString *)serverAddress tag:(NSInteger)tag;
 
