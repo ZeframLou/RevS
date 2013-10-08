@@ -27,6 +27,7 @@
 #import <arpa/inet.h>
 
 static NSMutableArray *connectedAddresses;
+static RSNatTier natTier;
 
 @interface RSUtilities () <RSMessengerDelegate>
 
@@ -34,7 +35,7 @@ static NSMutableArray *connectedAddresses;
 
 @implementation RSUtilities
 
-+ (NSArray *)localIpList
++ (NSArray *)localPublicIpList
 {
     NSData *data = [NSData dataWithContentsOfFile:IP_LIST_PATH];
     NSString *string = [NSData decryptData:data withKey:FILE_CODE];
@@ -45,13 +46,30 @@ static NSMutableArray *connectedAddresses;
         for (NSString *dataString in dataArray) {
             NSArray *array = [dataString componentsSeparatedByString:@"|"];
             NSString *ipAddressString = [array objectAtIndex:1];
-            [ipArray addObject:ipAddressString];
+            [ipArray addObject:[[ipAddressString componentsSeparatedByString:@","] objectAtIndex:0]];
         }
     }
     return ipArray;
 }
 
-+ (NSArray *)onlineNeighbors
++ (NSArray *)localPrivateIpList
+{
+    NSData *data = [NSData dataWithContentsOfFile:IP_LIST_PATH];
+    NSString *string = [NSData decryptData:data withKey:FILE_CODE];
+    NSMutableArray *ipArray = [NSMutableArray array];
+    NSArray *dataArray;
+    if (string.length > 0) {
+        dataArray = [string componentsSeparatedByString:@";"];
+        for (NSString *dataString in dataArray) {
+            NSArray *array = [dataString componentsSeparatedByString:@"|"];
+            NSString *ipAddressString = [array objectAtIndex:1];
+            [ipArray addObject:[[ipAddressString componentsSeparatedByString:@","] objectAtIndex:1]];
+        }
+    }
+    return ipArray;
+}
+
++ (NSArray *)onlineNeighborsPublicIp
 {
     NSData *data = [NSData dataWithContentsOfFile:IP_LIST_PATH];
     NSString *string = [NSData decryptData:data withKey:FILE_CODE];
@@ -61,7 +79,7 @@ static NSMutableArray *connectedAddresses;
         dataArray = [string componentsSeparatedByString:@";"];
         for (NSString *dataString in dataArray) {
             NSArray *array = [dataString componentsSeparatedByString:@"|"];
-            NSString *ipAddressString = [array objectAtIndex:1];
+            NSString *ipAddressString = [[[array objectAtIndex:1] componentsSeparatedByString:@","] objectAtIndex:0];
             BOOL isOnline = [[array objectAtIndex:2] integerValue];
             if (isOnline) {
                 [neighborArray addObject:ipAddressString];
@@ -71,16 +89,88 @@ static NSMutableArray *connectedAddresses;
     return neighborArray;
 }
 
-+ (NSArray *)contactListWithKValue:(NSInteger)k
++ (NSArray *)onlineNeighborsPrivateIp
 {
-    NSArray *ipList = [RSUtilities onlineNeighbors];
+    NSData *data = [NSData dataWithContentsOfFile:IP_LIST_PATH];
+    NSString *string = [NSData decryptData:data withKey:FILE_CODE];
+    NSMutableArray *neighborArray = [NSMutableArray array];
+    NSArray *dataArray;
+    if (string.length > 0) {
+        dataArray = [string componentsSeparatedByString:@";"];
+        for (NSString *dataString in dataArray) {
+            NSArray *array = [dataString componentsSeparatedByString:@"|"];
+            NSString *ipAddressString = [[[array objectAtIndex:1] componentsSeparatedByString:@","] objectAtIndex:1];
+            BOOL isOnline = [[array objectAtIndex:2] integerValue];
+            if (isOnline) {
+                [neighborArray addObject:ipAddressString];
+            }
+        }
+    }
+    return neighborArray;
+}
+
++ (NSArray *)contactPublicIpListWithKValue:(NSInteger)k
+{
+    NSArray *ipList = [RSUtilities onlineNeighborsPublicIp];
     
     if (k > ipList.count) {
         k = ipList.count;
     }
     //Get the online neighbors and the coresponding probability index value
     NSString *dataString = [NSData decryptData:[NSData dataWithContentsOfFile:PROB_INDEX_PATH] withKey:FILE_CODE];
-    NSMutableArray *dataArray = [NSMutableArray arrayWithArray:[dataString componentsSeparatedByString:@"/"]];
+    NSMutableArray *dataArray;
+    if (dataString.length == 0) {
+        dataArray = [NSMutableArray array];
+    }
+    else
+    {
+        dataArray = [NSMutableArray arrayWithArray:[dataString componentsSeparatedByString:@";"]];
+    }
+    NSMutableArray *probIndexList = [NSMutableArray array];
+    NSMutableArray *probIndexContactList = [NSMutableArray array];
+    for (NSString *string in dataArray) {
+        NSArray *array = [string componentsSeparatedByString:@":"];
+        NSString *ipAddress = [array objectAtIndex:0];
+        if ([ipList containsObject:ipAddress]) {
+            NSNumber *probIndex = [NSNumber numberWithInteger:[[array lastObject]integerValue]];
+            [probIndexContactList addObject:ipAddress];
+            [probIndexList addObject:probIndex];
+        }
+    }
+    //Get the neighbors with the highest probability value
+    NSMutableArray *contactList = [NSMutableArray array];
+    NSArray *sortedIndexList = [probIndexList sortedArrayUsingSelector:@selector(compare:)];
+    //sortedIndexList is the sorted version of probIndexList in an ascending order.
+    NSArray *indexList = [sortedIndexList subarrayWithRange:NSMakeRange(sortedIndexList.count - k, k)];
+    for (NSInteger i = 0; i < dataArray.count; i++) {
+        if (contactList.count == k) {
+            break;
+        }
+        if ([indexList containsObject:[probIndexList objectAtIndex:i]]) {
+            [contactList addObject:[probIndexContactList objectAtIndex:i]];
+        }
+    }
+    
+    return contactList;
+}
+
++ (NSArray *)contactPrivateIpListWithKValue:(NSInteger)k
+{
+    NSArray *ipList = [RSUtilities onlineNeighborsPrivateIp];
+    
+    if (k > ipList.count) {
+        k = ipList.count;
+    }
+    //Get the online neighbors and the coresponding probability index value
+    NSString *dataString = [NSData decryptData:[NSData dataWithContentsOfFile:PROB_INDEX_PATH] withKey:FILE_CODE];
+    NSMutableArray *dataArray;
+    if (dataString.length == 0) {
+        dataArray = [NSMutableArray array];
+    }
+    else
+    {
+        dataArray = [NSMutableArray arrayWithArray:[dataString componentsSeparatedByString:@";"]];
+    }
     
     NSMutableArray *probIndexList = [NSMutableArray array];
     NSMutableArray *probIndexContactList = [NSMutableArray array];
@@ -156,13 +246,17 @@ static NSMutableArray *connectedAddresses;
 + (NSString *)hashFromString:(NSString *)string
 {
     NSData *data = [string dataUsingEncoding:NSUTF8StringEncoding];
-    NSString *hash = [NSString string];
-    unsigned char digest[CC_SHA1_DIGEST_LENGTH];
-    if (CC_SHA1([data bytes], [data length], digest)) {
-        /* SHA-1 hash has been calculated and stored in 'digest'. */
-        hash = [NSString stringWithUTF8String:(char *)digest];
+    uint8_t digest[CC_SHA1_DIGEST_LENGTH];
+    
+    CC_SHA1(data.bytes, data.length, digest);
+    
+    NSMutableString *output = [NSMutableString stringWithCapacity:CC_SHA1_DIGEST_LENGTH * 2];
+    
+    for (int i = 0; i < CC_SHA1_DIGEST_LENGTH; i++)
+    {
+        [output appendFormat:@"%02x", digest[i]];
     }
-    return hash;
+    return output;
 }
 
 /*+ (NSArray *)listOfHashedFilenames
@@ -210,12 +304,12 @@ static NSMutableArray *connectedAddresses;
 
 + (BOOL)ipHasChanged
 {
-    return [[[NSUserDefaults standardUserDefaults]objectForKey:@"lastIPHash"] isEqualToString:[RSUtilities hashFromString:[RSUtilities publicIpAddress]]];
+    return [[[NSUserDefaults standardUserDefaults]objectForKey:@"lastIPHash"] isEqualToString:[RSUtilities hashFromString:[NSString stringWithFormat:@"%@,%@",[RSUtilities publicIpAddress],[RSUtilities privateIpAddress]]]];
 }
 
 + (void)updateIPHash
 {
-    [[NSUserDefaults standardUserDefaults] setObject:[RSUtilities hashFromString:[RSUtilities publicIpAddress]] forKey:@"lastIPHash"];
+    [[NSUserDefaults standardUserDefaults] setObject:[RSUtilities hashFromString:[NSString stringWithFormat:@"%@,%@",[RSUtilities publicIpAddress],[RSUtilities privateIpAddress]]] forKey:@"lastIPHash"];
 }
 
 + (NSArray *)connectedAddresses
@@ -242,6 +336,16 @@ static NSMutableArray *connectedAddresses;
         connectedAddresses = [NSMutableArray array];
     }
     [connectedAddresses removeObject:address];
+}
+
++ (RSNatTier)natTier
+{
+    return natTier;
+}
+
++ (void)setNatTier:(RSNatTier)newTier
+{
+    natTier = newTier;
 }
 
 @end

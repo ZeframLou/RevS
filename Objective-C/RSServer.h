@@ -1,8 +1,8 @@
 //
-//  RSDownload.h
+//  RSServer.h
 //  RevS
 //
-//  Created by Zebang Liu on 13-8-1.
+//  Created by lzbdd on 13-9-29.
 //  Copyright (c) 2013年 Zebang Liu. All rights reserved.
 //  Contact: the.great.lzbdd@gmail.com
 /*
@@ -22,44 +22,11 @@
  along with RevS.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #import <Foundation/Foundation.h>
 
-@protocol RSDownloadDelegate;
+@interface RSServer : NSObject
 
-@interface RSDownload : NSObject
-
-/*
-  Returns a static RSDownload object.
-*/
-+ (RSDownload *)sharedInstance;
-
-/*
-  Start a search query,if the file is found,then download the file.
-*/
-+ (void)downloadFile:(NSString *)fileName;
-
-/*
-  Download a file from a specific address.
-*/
-+ (void)downloadFile:(NSString *)fileName fromPublicAddress:(NSString *)publicAddress privateAddress:(NSString *)privateAddress;
-
-+ (void)addDelegate:(id <RSDownloadDelegate>)delegate;
-
-@end
-
-@protocol RSDownloadDelegate <NSObject>
-
-@optional
-
-/*
-  Called after a file is downloaded.
-*/
-- (void)didDownloadFile:(NSString *)fileName;
-
-/*
-  Called after a download request failed.
-*/
-- (void)downloadDidFail;
++ (void)start;
++ (void)stop;
 
 @end

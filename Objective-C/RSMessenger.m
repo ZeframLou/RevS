@@ -25,42 +25,34 @@
 
 #import "RevS.h"
 
+static NSMutableArray *registedMessageIdentifiers;
+static NSMutableArray *messageHistory;
+
 @interface RSMessenger () <GCDAsyncSocketDelegate,GCDAsyncUdpSocketDelegate>
 
-@property (nonatomic,strong) NSMutableArray *delegates;
 @property (nonatomic) NSInteger tag;
 @property (nonatomic) uint16_t port;
-@property (nonatomic,strong) NSString *remotePublicAddress;
-@property (nonatomic,strong) NSString *connectedAddress;
-@property (nonatomic,strong) NSString *messageString;
 //@property (nonatomic,strong) GCDAsyncSocket *tcpSocket;
 @property (nonatomic,strong) GCDAsyncUdpSocket *udpSocket;
-@property (nonatomic) BOOL isConnectionEstablisher;
-@property (nonatomic,strong) NSTimer *keepAliveTimer;
 @property (nonatomic) RSNatTier remoteNatTier;
+@property (nonatomic,strong) id <RSMessengerDelegate> delegate;
 
 @end
 
 @implementation RSMessenger
 
-@synthesize delegates,tag,port,remotePublicAddress,connectedAddress,messageString,udpSocket,isConnectionEstablisher,keepAliveTimer,remoteNatTier;
+@synthesize tag,port,udpSocket,remoteNatTier,delegate;
 
-+ (RSMessenger *)messengerWithPort:(uint16_t)port
++ (RSMessenger *)messengerWithPort:(uint16_t)port delegate:(id <RSMessengerDelegate>)delegate;
 {
-    //static RSMessenger *messenger;
-    //if (!messenger) {
-        RSMessenger *messenger = [[RSMessenger alloc]init];
-        messenger.delegates = [NSMutableArray array];
-        //messenger.tcpSocket = [[GCDAsyncSocket alloc]initWithDelegate:messenger delegateQueue:[RSMessenger delegateQueue]];
-        //[messenger.tcpSocket acceptOnPort:port error:nil];
-        messenger.udpSocket = [[GCDAsyncUdpSocket alloc]initWithDelegate:messenger delegateQueue:[RSMessenger delegateQueue]];
-        [messenger.udpSocket bindToPort:port error:nil];
-        [messenger.udpSocket beginReceiving:nil];
-        messenger.port = port;
-        messenger.remotePublicAddress = [NSString string];
-        messenger.connectedAddress = [NSString string];
-        messenger.messageString = [NSString string];
-    //}
+    RSMessenger *messenger = [[RSMessenger alloc]init];
+    messenger.delegate = delegate;
+    //messenger.tcpSocket = [[GCDAsyncSocket alloc]initWithDelegate:messenger delegateQueue:[RSMessenger delegateQueue]];
+    //[messenger.tcpSocket acceptOnPort:port error:nil];
+    messenger.udpSocket = [[GCDAsyncUdpSocket alloc]initWithDelegate:messenger delegateQueue:[RSMessenger delegateQueue]];
+    [messenger.udpSocket bindToPort:port error:nil];
+    [messenger.udpSocket beginReceiving:nil];
+    messenger.port = port;
     return messenger;
 }
 
@@ -83,49 +75,42 @@
     }
 }*/
 
-- (void)sendUdpMessage:(NSString *)message toHost:(NSString *)publicAddress tag:(NSInteger)tag
+- (void)sendUdpMessage:(NSString *)message toHostWithPublicAddress:(NSString *)publicAddress privateAddress:(NSString *)privateAddress tag:(NSInteger)tag
 {
     self.tag = tag;
-    messageString = message;
-    remotePublicAddress = publicAddress;
-    if (![[RSUtilities connectedAddresses]containsObject:publicAddress] && (NAT_TIER == RSTierUdpHolePunching || remoteNatTier == RSTierUdpHolePunching)) {
-        isConnectionEstablisher = YES;
-        [udpSocket sendData:[NSData encryptString:[RSMessenger messageWithIdentifier:@"CONS" arguments:@[[RSUtilities publicIpAddress],publicAddress]] withKey:MESSAGE_CODE] toHost:SERVER_IP port:port withTimeout:30 tag:0];
+    message = [message stringByReplacingOccurrencesOfString:@"PrivateAddress" withString:privateAddress];
+    [RSMessenger addMessageWithRemotePublicAddress:publicAddress privateAddress:privateAddress message:message delegate:delegate socket:udpSocket];
+    NSInteger messageTag = [messageHistory indexOfObject:[NSDictionary dictionaryWithObjects:@[publicAddress,privateAddress,message,delegate,udpSocket] forKeys:@[@"publicIp",@"privateIp",@"message",@"delegate",@"socket"]]];
+    if (![[RSUtilities connectedAddresses]containsObject:[NSString stringWithFormat:@"%@,%@",publicAddress,privateAddress]] && ([RSUtilities natTier] == RSTierUdpHolePunching || remoteNatTier == RSTierUdpHolePunching)) {
+        [udpSocket sendData:[NSData encryptString:[RSMessenger messageWithIdentifier:@"COMSRVR" arguments:@[[RSUtilities publicIpAddress],[RSUtilities privateIpAddress],publicAddress,privateAddress]] withKey:MESSAGE_CODE] toHost:SERVER_IP port:port withTimeout:30 tag:messageTag];
     }
-    else if ([[RSUtilities connectedAddresses]containsObject:publicAddress] && (NAT_TIER == RSTierUdpHolePunching || remoteNatTier == RSTierUdpHolePunching)) {
-        [udpSocket sendData:[NSData encryptString:messageString withKey:MESSAGE_CODE] toHost:connectedAddress port:port withTimeout:30 tag:0];
+    else if ([[RSUtilities connectedAddresses]containsObject:[NSString stringWithFormat:@"%@,%@",publicAddress,privateAddress]] && ([RSUtilities natTier] == RSTierUdpHolePunching || remoteNatTier == RSTierUdpHolePunching)) {
+        [udpSocket sendData:[NSData encryptString:message withKey:MESSAGE_CODE] toHost:publicAddress port:port withTimeout:30 tag:messageTag];
     }
-    else if (NAT_TIER == RSTierNoNatOrNatPmp) {
-        connectedAddress = publicAddress;
-        [RSUtilities addConnectedAddress:connectedAddress];
-        [udpSocket sendData:[NSData encryptString:messageString withKey:MESSAGE_CODE] toHost:connectedAddress port:port withTimeout:30 tag:0];
+    else if ([RSUtilities natTier] == RSTierNoNatOrNatPmp) {
+        [RSUtilities addConnectedAddress:[NSString stringWithFormat:@"%@,%@",publicAddress,privateAddress]];
+        [udpSocket sendData:[NSData encryptString:message withKey:MESSAGE_CODE] toHost:publicAddress port:port withTimeout:30 tag:messageTag];
     }
-    else if (NAT_TIER == RSTierRelay) {
-        [self sendRelayMessage:messageString toAddress:publicAddress];
+    else if ([RSUtilities natTier] == RSTierRelay) {
+        [self sendRelayMessage:message toPublicAddress:publicAddress privateAddress:privateAddress];
     }
 }
 
 - (void)sendServerMessage:(NSString *)message toServerAddress:(NSString *)serverAddress tag:(NSInteger)tag
 {
     self.tag = tag;
+    [RSMessenger addMessageWithRemotePublicAddress:serverAddress privateAddress:serverAddress message:message delegate:delegate socket:udpSocket];
     [udpSocket sendData:[NSData encryptString:message withKey:MESSAGE_CODE] toHost:serverAddress port:port withTimeout:30 tag:0];
 }
 
-- (void)sendRelayMessage:(NSString *)message toAddress:(NSString *)address
+- (void)sendRelayMessage:(NSString *)message toPublicAddress:(NSString *)publicIp privateAddress:(NSString *)privateIp
 {
-    [self sendServerMessage:[RSMessenger messageWithIdentifier:@"RELAY" arguments:@[[[NSString alloc]initWithData:[NSData encryptString:message withKey:MESSAGE_CODE] encoding:NSUTF8StringEncoding],address]] toServerAddress:SERVER_IP tag:0];
+    [self sendServerMessage:[RSMessenger messageWithIdentifier:@"RELAY" arguments:@[[[NSString alloc]initWithData:[NSData encryptString:message withKey:MESSAGE_CODE] encoding:NSUTF8StringEncoding],publicIp,privateIp]] toServerAddress:SERVER_IP tag:0];
 }
 
 - (void)closeConnection
 {
     [udpSocket closeAfterSending];
-}
-
-- (void)addDelegate:(id <RSMessengerDelegate>)delegate
-{
-    if (![delegates containsObject:delegate]) {
-        [delegates addObject:delegate];
-    }
 }
 
 + (NSString *)messageWithIdentifier:(NSString *)identifier arguments:(NSArray *)arguments
@@ -139,7 +124,9 @@
         }
         i += 1;
     }
-    message = [message stringByAppendingFormat:@"}%@",MESSAGE_END];
+    message = [message stringByAppendingFormat:@"}"];
+    message = [message stringByAppendingFormat:@"|PIP{PrivateAddress}"];
+
     return message;
 }
 
@@ -152,23 +139,58 @@
 + (NSArray *)argumentsOfMessage:(NSString *)message
 {
     NSString *argumentsString = [message substringFromIndex:[message rangeOfString:@"ARG{"].location + 4];
-    NSArray *arguments = [[argumentsString substringToIndex:argumentsString.length - 1] componentsSeparatedByString:@"[;]"];
+    argumentsString = [argumentsString substringToIndex:[argumentsString rangeOfString:@"}|PIP{"].location];
+    NSArray *arguments = [argumentsString componentsSeparatedByString:@"[;]"];
     return arguments;
 }
 
-- (void)startKeepAliveMessages
++ (void)registerMessageIdentifiers:(NSArray *)identifiers delegate:(id)delegate
 {
-    keepAliveTimer = [NSTimer scheduledTimerWithTimeInterval:KEEP_ALIVE_INTERVAL target:self selector:@selector(sendKeepAliveMessage) userInfo:nil repeats:YES];
+    if (!registedMessageIdentifiers) {
+        registedMessageIdentifiers = [NSMutableArray array];
+    }
+    [registedMessageIdentifiers addObject:[NSDictionary dictionaryWithObjects:@[delegate,identifiers] forKeys:@[@"delegate",@"identifiers"]]];
 }
 
-- (void)stopKeepAliveMessages
++ (void)addMessageWithRemotePublicAddress:(NSString *)publicIp privateAddress:(NSString *)privateIp message:(NSString *)message delegate:(id)delegate socket:(GCDAsyncUdpSocket *)sock
 {
-    [keepAliveTimer invalidate];
+    if (!messageHistory) {
+        messageHistory = [NSMutableArray array];
+    }
+    NSDictionary *dict = [NSDictionary dictionaryWithObjects:@[publicIp,privateIp,message,delegate,sock] forKeys:@[@"publicIp",@"privateIp",@"message",@"delegate",@"socket"]];
+    if (![messageHistory containsObject:dict]) {
+        [messageHistory addObject:dict];
+    }
 }
 
-- (void)sendKeepAliveMessage
++ (NSString *)publicIpFromMessageTag:(NSInteger)tag
 {
-    [self sendServerMessage:[RSMessenger messageWithIdentifier:@"ALIVE" arguments:@[]] toServerAddress:connectedAddress tag:0];
+    NSDictionary *dict = [messageHistory objectAtIndex:tag];
+    return [dict objectForKey:@"publicIp"];
+}
+
++ (NSString *)privateIpFromMessageTag:(NSInteger)tag
+{
+    NSDictionary *dict = [messageHistory objectAtIndex:tag];
+    return [dict objectForKey:@"privateIp"];
+}
+
++ (NSString *)messageStringFromMessageTag:(NSInteger)tag
+{
+    NSDictionary *dict = [messageHistory objectAtIndex:tag];
+    return [dict objectForKey:@"message"];
+}
+
++ (NSString *)delegateFromMessageTag:(NSInteger)tag
+{
+    NSDictionary *dict = [messageHistory objectAtIndex:tag];
+    return [dict objectForKey:@"delegate"];
+}
+
++ (NSString *)socketFromMessageTag:(NSInteger)tag
+{
+    NSDictionary *dict = [messageHistory objectAtIndex:tag];
+    return [dict objectForKey:@"socket"];
 }
 
 + (dispatch_queue_t)delegateQueue
@@ -239,108 +261,103 @@
 
 - (void)udpSocket:(GCDAsyncUdpSocket *)sock didSendDataWithTag:(long)tag
 {
-    if (tag == PUBLIC_ADDRESS_TAG) {
-        //Connection established
-        connectedAddress = remotePublicAddress;
-        
-        [RSUtilities addConnectedAddress:connectedAddress];
-        [udpSocket sendData:[NSData encryptString:messageString withKey:MESSAGE_CODE] toHost:connectedAddress port:port withTimeout:30 tag:0];
+    if ([[RSMessenger messageStringFromMessageTag:tag] rangeOfString:@"PHOLE"].length > 0) {
+        //Connection established        
+        [RSUtilities addConnectedAddress:[NSString stringWithFormat:@"%@,%@",[RSMessenger publicIpFromMessageTag:tag],[RSMessenger privateIpFromMessageTag:tag]]];
+        [udpSocket sendData:[NSData encryptString:[RSMessenger messageStringFromMessageTag:tag] withKey:MESSAGE_CODE] toHost:[RSMessenger publicIpFromMessageTag:tag] port:port withTimeout:30 tag:tag];
     }
     else
     {
-        if (isConnectionEstablisher) {
-            if (!keepAliveTimer.isValid) {
-                [self startKeepAliveMessages];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            id delegate = [RSMessenger delegateFromMessageTag:tag];
+            if ([delegate respondsToSelector:@selector(messenger:didSendMessage:toPublicAddress:privateAddress:tag:)]) {
+                [delegate messenger:self didSendMessage:[RSMessenger messageStringFromMessageTag:tag] toPublicAddress:[RSMessenger publicIpFromMessageTag:tag] privateAddress:[RSMessenger privateIpFromMessageTag:tag] tag:self.tag];
             }
-            else if (tag != KEEP_ALIVE_TAG){
-                [self stopKeepAliveMessages];
-                [self startKeepAliveMessages];
-            }
-        }
-        if (tag != KEEP_ALIVE_TAG){
-            dispatch_async(dispatch_get_main_queue(), ^{
-                for (id delegate in delegates) {
-                    if ([delegate respondsToSelector:@selector(messenger:didWriteDataWithTag:)]) {
-                        [delegate messenger:self didWriteDataWithTag:tag];
-                    }
-                }
-            });
-        }
+        });
     }
 }
 
 - (void)udpSocket:(GCDAsyncUdpSocket *)sock didReceiveData:(NSData *)data fromAddress:(NSData *)address withFilterContext:(id)filterContext
 {
     NSString *messageString = [NSData decryptData:data withKey:MESSAGE_CODE];
-    messageString = [messageString substringToIndex:messageString.length - 1];
-    NSString *messageIdentifier = [RSMessenger identifierOfMessage:messageString];
-    NSArray *messageArguments = [RSMessenger argumentsOfMessage:messageString];
-    if ([messageIdentifier isEqualToString:@"CONC"]) {
-        NSString *publicAddress = [messageArguments objectAtIndex:0];
-        [udpSocket sendData:[NSData encryptString:[RSMessenger messageWithIdentifier:@"PHOLE" arguments:@[[RSUtilities publicIpAddress]]] withKey:MESSAGE_CODE] toHost:publicAddress port:MESSAGE_PORT withTimeout:30 tag:PUBLIC_ADDRESS_TAG];
-    }
-    else if ([messageIdentifier isEqualToString:@"PHOLE"])
-    {
-        NSString *publicAddress = [messageArguments objectAtIndex:0];
-        if (![[RSUtilities connectedAddresses]containsObject:publicAddress]) {
-            [RSUtilities addConnectedAddress:[GCDAsyncUdpSocket hostFromAddress:address]];
+    NSString *recieverPrivateIP = [messageString substringFromIndex:[messageString rangeOfString:@"|PIP{"].location + 5];
+    recieverPrivateIP = [recieverPrivateIP substringToIndex:recieverPrivateIP.length - 1];
+    if ([recieverPrivateIP isEqualToString:[RSUtilities privateIpAddress]]) {
+        NSString *messageIdentifier = [RSMessenger identifierOfMessage:messageString];
+        NSArray *messageArguments = [RSMessenger argumentsOfMessage:messageString];
+        if ([messageIdentifier isEqualToString:@"COMCLNT"]) {
+            NSString *publicAddress = [messageArguments objectAtIndex:0];
+            NSString *privateAddress = [messageArguments objectAtIndex:1];
+            NSString *message = [RSMessenger messageWithIdentifier:@"PHOLE" arguments:@[[RSUtilities publicIpAddress],[RSUtilities privateIpAddress]]];
+            [self sendUdpMessage:message toHostWithPublicAddress:publicAddress privateAddress:privateAddress tag:0];
+        }
+        else if ([messageIdentifier isEqualToString:@"PHOLE"])
+        {
+            NSString *publicAddress = [messageArguments objectAtIndex:0];
+            NSString *privateAddress = [messageArguments objectAtIndex:1];
+            if (![[RSUtilities connectedAddresses]containsObject:[NSString stringWithFormat:@"%@,%@",publicAddress,privateAddress]]) {
+                [RSUtilities addConnectedAddress:[NSString stringWithFormat:@"%@,%@",publicAddress,privateAddress]];
+                for (NSDictionary *dict in messageHistory) {
+                    NSString *publicIp = [dict objectForKey:@"publicIp"];
+                    NSString *privateIp = [dict objectForKey:@"privateIp"];
+                    if ([publicIp isEqualToString:publicAddress] && [privateIp isEqualToString:privateAddress]) {
+                        [self sendUdpMessage:[dict objectForKey:@"message"] toHostWithPublicAddress:publicAddress privateAddress:privateAddress tag:0];
+                        break;
+                    }
+                }
+            }
+        }
+        else
+        {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                for (NSDictionary *dict in registedMessageIdentifiers) {
+                    id delegate = [dict objectForKey:@"delegate"];
+                    NSArray *identifiers = [dict objectForKey:@"identifiers"];
+                    if ([identifiers containsObject:messageIdentifier]) {
+                        if ([delegate respondsToSelector:@selector(messenger:didRecieveMessageWithIdentifier:arguments:tag:)]) {
+                            [delegate messenger:self didRecieveMessageWithIdentifier:messageIdentifier arguments:messageArguments tag:tag];
+                        }
+                    }
+                }
+            });
         }
     }
-    else if ([messageIdentifier isEqualToString:@"RELAY"]) {
-        NSString *message = [NSData decryptData:[[messageArguments objectAtIndex:0] dataUsingEncoding:NSUTF8StringEncoding] withKey:MESSAGE_CODE];
-        message = [message substringToIndex:messageString.length - 1];
-        NSString *messageIdentifier = [RSMessenger identifierOfMessage:message];
-        NSArray *messageArguments = [RSMessenger argumentsOfMessage:message];
-        dispatch_async(dispatch_get_main_queue(), ^{
-            for (id delegate in delegates) {
-                if ([delegate respondsToSelector:@selector(messenger:didRecieveMessageWithIdentifier:arguments:tag:)]) {
-                    [delegate messenger:self didRecieveMessageWithIdentifier:messageIdentifier arguments:messageArguments tag:tag];
-                }
-            }
-        });
-    }
-    else
-    {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            for (id delegate in delegates) {
-                if ([delegate respondsToSelector:@selector(messenger:didRecieveMessageWithIdentifier:arguments:tag:)]) {
-                    [delegate messenger:self didRecieveMessageWithIdentifier:messageIdentifier arguments:messageArguments tag:tag];
-                }
-            }
-        });
+    else {
+        [self sendServerMessage:messageString toServerAddress:recieverPrivateIP tag:0];
     }
 }
 
 - (void)udpSocketDidClose:(GCDAsyncUdpSocket *)sock withError:(NSError *)error
 {
-    [self stopKeepAliveMessages];
-    [RSUtilities removeConnectedAddress:connectedAddress];
-    isConnectionEstablisher = NO;
+    for (NSDictionary *dict in messageHistory) {
+        GCDAsyncUdpSocket *socket = [dict objectForKey:@"socket"];
+        if ([sock isEqual:socket]) {
+            NSString *publicAddress = [dict objectForKey:@"publicIp"];
+            NSString *privateAddress = [dict objectForKey:@"privateIp"];
+            [RSUtilities removeConnectedAddress:[NSString stringWithFormat:@"%@,%@",publicAddress,privateAddress]];
+        }
+    }
     dispatch_async(dispatch_get_main_queue(), ^{
-        for (id delegate in delegates) {
-            if ([delegate respondsToSelector:@selector(messenger:connectionDidCloseWithError:)]) {
-                [delegate messenger:self connectionDidCloseWithError:error];
-            }
+        if ([delegate respondsToSelector:@selector(messenger:connectionDidCloseWithError:)]) {
+            [delegate messenger:self connectionDidCloseWithError:error];
         }
     });
 }
 
 - (void)udpSocket:(GCDAsyncUdpSocket *)sock didNotSendDataWithTag:(long)tag dueToError:(NSError *)error
 {
-    if (NAT_TIER == RSTierNoNatOrNatPmp && remoteNatTier != RSTierUdpHolePunching) {
+    if ([RSUtilities natTier] == RSTierNoNatOrNatPmp && remoteNatTier != RSTierUdpHolePunching) {
         remoteNatTier = RSTierUdpHolePunching;
-        [RSUtilities removeConnectedAddress:remotePublicAddress];
-        [self sendUdpMessage:messageString toHost:remotePublicAddress tag:0];
+        [RSUtilities removeConnectedAddress:[NSString stringWithFormat:@"%@,%@",[RSMessenger publicIpFromMessageTag:tag],[RSMessenger privateIpFromMessageTag:tag]]];
+        [self sendUdpMessage:[RSMessenger messageStringFromMessageTag:tag] toHostWithPublicAddress:[RSMessenger publicIpFromMessageTag:tag] privateAddress:[RSMessenger privateIpFromMessageTag:tag] tag:tag];
     }
-    else if (NAT_TIER == RSTierUdpHolePunching || remoteNatTier == RSTierUdpHolePunching) {
+    else if ([RSUtilities natTier] == RSTierUdpHolePunching || remoteNatTier == RSTierUdpHolePunching) {
         remoteNatTier = RSTierRelay;
-        [self sendUdpMessage:messageString toHost:remotePublicAddress tag:0];
+        [self sendUdpMessage:[RSMessenger messageStringFromMessageTag:tag] toHostWithPublicAddress:[RSMessenger publicIpFromMessageTag:tag] privateAddress:[RSMessenger privateIpFromMessageTag:tag] tag:0];
     }
     dispatch_async(dispatch_get_main_queue(), ^{
-        for (id delegate in delegates) {
-            if ([delegate respondsToSelector:@selector(messenger:didNotSendDataWithTag:error:)]) {
-                [delegate messenger:self didNotSendDataWithTag:self.tag error:error];
-            }
+        if ([delegate respondsToSelector:@selector(messenger:didNotSendDataWithTag:error:)]) {
+            [delegate messenger:self didNotSendDataWithTag:self.tag error:error];
         }
     });
 }

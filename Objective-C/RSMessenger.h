@@ -36,13 +36,13 @@
 /*
   Initializes a RSMessenger object with the given port.
 */
-+ (RSMessenger *)messengerWithPort:(uint16_t)port;
++ (RSMessenger *)messengerWithPort:(uint16_t)port delegate:(id <RSMessengerDelegate>)delegate;
 
 /*
   Send a message to the specified host.This method uses udp hole punching in order to bypass the NAT.The tag argument is for your own convenience,you can use it as an array index,identifier,etc.
 */
 //- (void)sendTcpMessage:(NSString *)message toHost:(NSString *)host tag:(NSInteger)tag;
-- (void)sendUdpMessage:(NSString *)message toHost:(NSString *)publicAddress tag:(NSInteger)tag;
+- (void)sendUdpMessage:(NSString *)message toHostWithPublicAddress:(NSString *)publicAddress privateAddress:(NSString *)privateAddress tag:(NSInteger)tag;
 
 /*
   Send a message to the server.The difference between this method and sendUdpMethod:toHost:tag: is that this method doesn't use udp hole punching.
@@ -54,7 +54,6 @@
 */
 - (void)closeConnection;
 
-- (void)addDelegate:(id <RSMessengerDelegate>)delegate;
 /*
   Returns a formatted message following the RevS Message Protocol(RSMP).Visit https://github.com/theGreatLzbdd/RevS/wiki/RevS-Message-Protocol to learn more.
 */
@@ -70,6 +69,11 @@
 */
 + (NSArray *)argumentsOfMessage:(NSString *)message;
 
+/*
+  Registers message identifiers so that when a message is recieved,RSMessenger will be able to pass it to the right object.
+*/
++ (void)registerMessageIdentifiers:(NSArray *)identifiers delegate:(id)delegate;
+
 @end
 
 @protocol RSMessengerDelegate <NSObject>
@@ -84,7 +88,7 @@
 /*
   Called when the messenger wrote data on a remote storage.The tag argument is for your own convenience,you can use it as an array index,identifier,etc.
 */
-- (void)messenger:(RSMessenger *)messenger didWriteDataWithTag:(NSInteger)tag;
+- (void)messenger:(RSMessenger *)messenger didSendMessage:(NSString *)message toPublicAddress:(NSString *)publicAddress privateAddress:(NSString *)privateAddress tag:(NSInteger)tag;
 
 /*
   Called when the messenger's connection has been closed.If the connection was closed by calling closeConnection,the "error" value will be nil.

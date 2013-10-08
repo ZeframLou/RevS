@@ -41,31 +41,32 @@
     if (!sharedInstance) {
         sharedInstance = [[RSUpload alloc]init];
         sharedInstance.delegates = [NSMutableArray array];
+        [RSMessenger registerMessageIdentifiers:@[@"UP_REQ",@"UP_READY",@"U_FILE_DATA"] delegate:sharedInstance];
     }
     return sharedInstance;
 }
 
 + (void)uploadFile:(NSString *)fileName
 {
-    NSArray *contactList = [RSUtilities onlineNeighbors];
-    
+    NSArray *contactPublicIpList = [RSUtilities onlineNeighborsPublicIp];
+    NSArray *contactPrivateIpList = [RSUtilities onlineNeighborsPrivateIp];
+
     for (NSInteger i = 0; i < K_UPLOAD; i++) {
-        if (i < contactList.count) {
-            NSString *publicAddress = [contactList objectAtIndex:i];
-            NSString *messageString = [RSMessenger messageWithIdentifier:@"UP_REQ" arguments:@[fileName,[RSUtilities publicIpAddress],[NSString stringWithFormat:@"%ld",(unsigned long)TTL]]];
-            RSMessenger *message = [RSMessenger messengerWithPort:MESSAGE_PORT];
-            [message addDelegate:[RSUpload sharedInstance]];
-            [message sendUdpMessage:messageString toHost:publicAddress tag:UPLOAD_TAG];
+        if (i < contactPublicIpList.count) {
+            NSString *publicAddress = [contactPublicIpList objectAtIndex:i];
+            NSString *privateAddress = [contactPrivateIpList objectAtIndex:i];
+            NSString *messageString = [RSMessenger messageWithIdentifier:@"UP_REQ" arguments:@[fileName,[RSUtilities publicIpAddress],[RSUtilities privateIpAddress],[NSString stringWithFormat:@"%ld",(unsigned long)TTL]]];
+            RSMessenger *message = [RSMessenger messengerWithPort:MESSAGE_PORT delegate:[RSUpload sharedInstance]];
+            [message sendUdpMessage:messageString toHostWithPublicAddress:publicAddress privateAddress:privateAddress tag:0];
         }
     }
 }
 
-+ (void)uploadFile:(NSString *)fileName toAddress:(NSString *)publicAddress
++ (void)uploadFile:(NSString *)fileName toPublicAddress:(NSString *)publicAddress privateAddress:(NSString *)privateAddress
 {
-    NSString *messageString = [RSMessenger messageWithIdentifier:@"U_FILE_DATA" arguments:@[fileName,[NSData decryptData:[NSData dataWithContentsOfFile:[STORED_DATA_DIRECTORY stringByAppendingString:fileName]] withKey:FILE_CODE],@"0",[RSUtilities publicIpAddress]]];
-    RSMessenger *message = [RSMessenger messengerWithPort:MESSAGE_PORT];
-    [message addDelegate:[RSUpload sharedInstance]];
-    [message sendUdpMessage:messageString toHost:publicAddress tag:UPLOAD_TAG];
+    NSString *messageString = [RSMessenger messageWithIdentifier:@"U_FILE_DATA" arguments:@[fileName,[NSData decryptData:[NSData dataWithContentsOfFile:[STORED_DATA_DIRECTORY stringByAppendingString:fileName]] withKey:FILE_CODE],@"0",[RSUtilities publicIpAddress],[RSUtilities privateIpAddress]]];
+    RSMessenger *message = [RSMessenger messengerWithPort:MESSAGE_PORT delegate:[RSUpload sharedInstance]];
+    [message sendUdpMessage:messageString toHostWithPublicAddress:publicAddress privateAddress:privateAddress tag:0];
 }
 
 + (void)addDelegate:(id <RSUploadDelegate>)delegate
@@ -81,22 +82,22 @@
     {
         NSString *fileName = [arguments objectAtIndex:0];
         NSString *fileOwnerPublicIP = [arguments objectAtIndex:1];
-        NSInteger timeToLive = [[arguments objectAtIndex:2] integerValue];
-        RSMessenger *message = [RSMessenger messengerWithPort:MESSAGE_PORT];
-        [message addDelegate:self];
-        [message sendUdpMessage:[RSMessenger messageWithIdentifier:@"UP_READY" arguments:@[fileName,[RSUtilities publicIpAddress],[NSString stringWithFormat:@"%ld",(unsigned long)timeToLive]]] toHost:fileOwnerPublicIP  tag:UPLOAD_TAG];
+        NSString *fileOwnerPrivateIP = [arguments objectAtIndex:2];
+        NSInteger timeToLive = [[arguments objectAtIndex:3] integerValue];
+        RSMessenger *message = [RSMessenger messengerWithPort:MESSAGE_PORT delegate:self];
+        [message sendUdpMessage:[RSMessenger messageWithIdentifier:@"UP_READY" arguments:@[fileName,[RSUtilities publicIpAddress],[RSUtilities privateIpAddress],[NSString stringWithFormat:@"%ld",(unsigned long)timeToLive]]] toHostWithPublicAddress:fileOwnerPublicIP privateAddress:fileOwnerPrivateIP tag:0];
     }
     else if ([identifier isEqualToString:@"UP_READY"])
     {
         NSString *fileName = [arguments objectAtIndex:0];
         NSString *requesterPublicIP = [arguments objectAtIndex:1];
-        NSInteger timeToLive = [[arguments objectAtIndex:2] integerValue];
+        NSString *requesterPrivateIP = [arguments objectAtIndex:2];
+        NSInteger timeToLive = [[arguments objectAtIndex:3] integerValue];
         NSData *data = [NSData dataWithContentsOfFile:[NSString stringWithFormat:@"%@%@",STORED_DATA_DIRECTORY,fileName]];
         NSString *dataString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-        NSString *string = [RSMessenger messageWithIdentifier:@"U_FILE_DATA" arguments:@[fileName,dataString,[NSString stringWithFormat:@"%ld",(unsigned long)timeToLive],requesterPublicIP]];
-        RSMessenger *message = [RSMessenger messengerWithPort:MESSAGE_PORT];
-        [message addDelegate:self];
-        [message sendUdpMessage:string toHost:requesterPublicIP tag:UPLOAD_TAG];
+        NSString *string = [RSMessenger messageWithIdentifier:@"U_FILE_DATA" arguments:@[fileName,dataString,[NSString stringWithFormat:@"%ld",(unsigned long)timeToLive],requesterPublicIP,requesterPrivateIP]];
+        RSMessenger *message = [RSMessenger messengerWithPort:MESSAGE_PORT delegate:self];
+        [message sendUdpMessage:string toHostWithPublicAddress:requesterPublicIP privateAddress:requesterPrivateIP tag:0];
         for (id delegate in delegates) {
             if ([delegate respondsToSelector:@selector(didUploadFile:)]) {
                 [delegate didUploadFile:fileName];
@@ -108,25 +109,27 @@
         NSString *dataString = [arguments objectAtIndex:1];
         NSInteger timeToLive = [[arguments objectAtIndex:2] integerValue];
         NSString *uploaderPublicIP = [arguments objectAtIndex:3];
+        NSString *uploaderPrivateIP = [arguments objectAtIndex:4];
         timeToLive -= 1;
         NSData *data = [dataString dataUsingEncoding:NSUTF8StringEncoding];
-        NSString *string = [RSMessenger messageWithIdentifier:@"UP_REQ" arguments:@[fileName,[RSUtilities publicIpAddress],[NSString stringWithFormat:@"%ld",(unsigned long)timeToLive]]];
+        NSString *messageString = [RSMessenger messageWithIdentifier:@"UP_REQ" arguments:@[fileName,[RSUtilities publicIpAddress],[RSUtilities privateIpAddress],[NSString stringWithFormat:@"%ld",(unsigned long)timeToLive]]];
         //Prevent error
         if ([RSUtilities freeDiskspace] < data.length) {
-            string = [RSMessenger messageWithIdentifier:@"UP_REQ" arguments:@[fileName,uploaderPublicIP,[NSString stringWithFormat:@"%ld",timeToLive + 1]]];
+            messageString = [RSMessenger messageWithIdentifier:@"UP_REQ" arguments:@[fileName,uploaderPublicIP,uploaderPrivateIP,[NSString stringWithFormat:@"%d",timeToLive + 1]]];
         }
         else
         {
             [data writeToFile:[NSString stringWithFormat:@"%@%@",STORED_DATA_DIRECTORY,fileName] atomically:YES];
         }
         if (timeToLive > 0) {
-            NSArray *contactList = [RSUtilities contactListWithKValue:K_NEIGHBOR];
+            NSArray *contactPublicIpList = [RSUtilities contactPublicIpListWithKValue:K_UPLOAD];
+            NSArray *contactPrivateIpList = [RSUtilities contactPrivateIpListWithKValue:K_UPLOAD];
             for (NSInteger i = 0; i < K_UPLOAD; i++) {
-                if (i < contactList.count && ![[contactList objectAtIndex:i] isEqualToString:uploaderPublicIP]) {
-                    NSString *contactPublicIP = [contactList objectAtIndex:i];
-                    RSMessenger *message = [RSMessenger messengerWithPort:MESSAGE_PORT];
-                    [message addDelegate:self];
-                    [message sendUdpMessage:string toHost:contactPublicIP tag:UPLOAD_TAG];
+                if (i < contactPublicIpList.count && ![[contactPublicIpList objectAtIndex:i] isEqualToString:uploaderPublicIP] && ![[contactPrivateIpList objectAtIndex:i] isEqualToString:uploaderPrivateIP]) {
+                    NSString *contactPublicIP = [contactPublicIpList objectAtIndex:i];
+                    NSString *contactPrivateIP = [contactPrivateIpList objectAtIndex:i];
+                    RSMessenger *message = [RSMessenger messengerWithPort:MESSAGE_PORT delegate:self];
+                    [message sendUdpMessage:messageString toHostWithPublicAddress:contactPublicIP privateAddress:contactPrivateIP tag:0];
                 }
             }
         }

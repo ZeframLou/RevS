@@ -1,5 +1,5 @@
 //
-//  RSNodeManage.h
+//  RSClient.h
 //  RevS
 //
 //  Created by Zebang Liu on 13-8-1.
@@ -26,14 +26,9 @@
 #import <Foundation/Foundation.h>
 
 /*
-  This class implements the basic network functions,like joining and leaving the network.
+  This class implements the basic client functions,like joining and leaving the network.
 */
-@interface RSNodeManage : NSObject
-
-/*
- Returns a static RSNodeManage object.
-*/
-+ (RSNodeManage *)sharedInstance;
+@interface RSClient : NSObject
 
 /*
   Sends a message to all the neighbors to tell them that this device is online.If the address of the device is not recorded on the server,send a message to the server too.

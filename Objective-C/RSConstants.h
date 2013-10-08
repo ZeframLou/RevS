@@ -25,27 +25,23 @@
 
 #warning If you don't change these and publish your app with it,you might want to shoot yourself in the face LOL
 
-static const NSString *FILE_CODE = @"just a simple code(you need to change this into a 256 bit password)";//For encrypting and decrypting files
-static const NSString *MESSAGE_CODE = @"just a simple code(you need to change this into a 256 bit password)";//For encrypting and decrypting messages
-static const NSString *SERVER_IP = @"127.0.0.1";
+#define FILE_CODE @"256-bit code"//For encrypting and decrypting files
+#define MESSAGE_CODE @"256-bit code"//For encrypting and decrypting messages
+#define SERVER_IP @"255.255.255.255"
 
 //As for the constants below,change them,don't change them,it doesn't really matter
 //Strings
 #define IP_LIST_PATH [NSString stringWithFormat:@"%@/Documents/ipList",NSHomeDirectory()]
 #define PROB_INDEX_PATH [NSString stringWithFormat:@"%@/Documents/probIndex",NSHomeDirectory()]
 #define STORED_DATA_DIRECTORY [NSString stringWithFormat:@"%@/Documents/Data/",NSHomeDirectory()]
-#define MESSAGE_END @"\n"
 
 //Ports
-static const uint16_t MESSAGE_PORT = 99;
+static const uint16_t MESSAGE_PORT = 99527;
 //static const uint16_t MESSAGE_PORT = 527;
 //static const uint16_t MESSAGE_PORT = 805;
 
 //Tags
-static const NSInteger KEEP_ALIVE_TAG = 17;
-static const NSInteger DOWNLOAD_TAG = 99;
-static const NSInteger UPLOAD_TAG = 111;
-static const NSInteger PUBLIC_ADDRESS_TAG = 1214;
+static const NSInteger HOLE_PUNCH_TAG = -1;
 
 //Numbers
 static const NSInteger TTL = 6;//Time to live

@@ -35,17 +35,20 @@
 /*
   Returns an array of strings containing the addresses of all the neighbors.
 */
-+ (NSArray *)localIpList;
++ (NSArray *)localPublicIpList;
++ (NSArray *)localPrivateIpList;
 
 /*
   Only returns the online neighbors' addresses.
 */
-+ (NSArray *)onlineNeighbors;
++ (NSArray *)onlineNeighborsPublicIp;
++ (NSArray *)onlineNeighborsPrivateIp;
 
 /*
   Returns the neighbors with the highest probability value.The "k" value is the count of the addresses you want.
 */
-+ (NSArray *)contactListWithKValue:(NSInteger)k;
++ (NSArray *)contactPublicIpListWithKValue:(NSInteger)k;
++ (NSArray *)contactPrivateIpListWithKValue:(NSInteger)k;
 
 /*
   Returns the local IP address in the local network.(Possibly something like 192.168.0.101)
@@ -89,18 +92,13 @@
 + (void)updateIPHash;
 
 /*
- 
+  Returns the addresses of devices that has a connection with the local device.
 */
 + (NSArray *)connectedAddresses;
-
-/*
- 
-*/
 + (void)addConnectedAddress:(NSString *)address;
-
-/*
-
-*/
 + (void)removeConnectedAddress:(NSString *)address;
+
++ (NSUInteger)natTier;
++ (void)setNatTier:(NSUInteger)newTier;
 
 @end
