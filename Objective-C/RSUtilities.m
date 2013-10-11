@@ -69,7 +69,7 @@ static RSNatTier natTier;
     return ipArray;
 }
 
-+ (NSArray *)onlineNeighborsPublicIp
++ (NSArray *)onlineNeighborsPublicIpList
 {
     NSData *data = [NSData dataWithContentsOfFile:IP_LIST_PATH];
     NSString *string = [NSData decryptData:data withKey:FILE_CODE];
@@ -89,7 +89,7 @@ static RSNatTier natTier;
     return neighborArray;
 }
 
-+ (NSArray *)onlineNeighborsPrivateIp
++ (NSArray *)onlineNeighborsPrivateIpList
 {
     NSData *data = [NSData dataWithContentsOfFile:IP_LIST_PATH];
     NSString *string = [NSData decryptData:data withKey:FILE_CODE];
@@ -111,7 +111,7 @@ static RSNatTier natTier;
 
 + (NSArray *)contactPublicIpListWithKValue:(NSInteger)k
 {
-    NSArray *ipList = [RSUtilities onlineNeighborsPublicIp];
+    NSArray *ipList = [RSUtilities onlineNeighborsPublicIpList];
     
     if (k > ipList.count) {
         k = ipList.count;
@@ -156,7 +156,7 @@ static RSNatTier natTier;
 
 + (NSArray *)contactPrivateIpListWithKValue:(NSInteger)k
 {
-    NSArray *ipList = [RSUtilities onlineNeighborsPrivateIp];
+    NSArray *ipList = [RSUtilities onlineNeighborsPrivateIpList];
     
     if (k > ipList.count) {
         k = ipList.count;

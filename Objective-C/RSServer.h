@@ -24,9 +24,28 @@
 
 #import <Foundation/Foundation.h>
 
+/*
+  A class that does server operations.
+*/
+
+@protocol RSServerDelegate <NSObject>
+
+@optional
+
+- (void)serverDidRecieveMessageWithIdentifier:(NSString *)identifier arguments:(NSArray *)arguments;
+
+@end
+
 @interface RSServer : NSObject
 
+/*
+  Start the server to handle incoming trasmissions.
+*/
 + (void)start;
+
+/*
+  Stop the server.
+*/
 + (void)stop;
 
 @end

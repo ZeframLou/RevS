@@ -35,13 +35,33 @@
 
 @end
 
+/*
+  A class that use NAT port mapping and UPnP to map ports.
+*/
+
 @interface RSPortMapper : NSObject
 
+/*
+  Start the port mapper.
+*/
 + (void)start;
+
+/*
+  Stop the port mapper.
+*/
 + (void)stop;
+
+/*
+  Returns the local address.
+*/
 + (NSString *)publicAddress;
 + (NSString *)privateAddress;
+
 + (void)addDelegate:(id)delegate;
+
+/*
+  Add a port to map.
+*/
 + (void)addMapperWithPort:(UInt16)port;
 
 @end

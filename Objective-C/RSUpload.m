@@ -48,8 +48,8 @@
 
 + (void)uploadFile:(NSString *)fileName
 {
-    NSArray *contactPublicIpList = [RSUtilities onlineNeighborsPublicIp];
-    NSArray *contactPrivateIpList = [RSUtilities onlineNeighborsPrivateIp];
+    NSArray *contactPublicIpList = [RSUtilities onlineNeighborsPublicIpList];
+    NSArray *contactPrivateIpList = [RSUtilities onlineNeighborsPrivateIpList];
 
     for (NSInteger i = 0; i < K_UPLOAD; i++) {
         if (i < contactPublicIpList.count) {

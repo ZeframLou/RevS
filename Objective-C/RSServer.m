@@ -25,6 +25,7 @@
 #import "RevS.h"
 
 static RSMessenger *messenger;
+static NSMutableArray *delegates;
 
 @interface RSServer () <RSMessengerDelegate>
 
@@ -60,6 +61,16 @@ static RSMessenger *messenger;
 {
     if (![[NSFileManager defaultManager]fileExistsAtPath:IP_LIST_PATH]) {
         [[NSFileManager defaultManager]createFileAtPath:IP_LIST_PATH contents:nil attributes:nil];
+    }
+}
+
++ (void)addDelegate:(id)delegate
+{
+    if (!delegates) {
+        delegates = [NSMutableArray array];
+    }
+    if (![delegates containsObject:delegate]) {
+        [delegates addObject:delegate];
     }
 }
 
@@ -154,6 +165,13 @@ static RSMessenger *messenger;
         [messenger sendUdpMessage:messageString toHostWithPublicAddress:destinationPublicIp privateAddress:destinationPrivateIp tag:0];
         messageString = [RSMessenger messageWithIdentifier:@"COMCLNT" arguments:@[destinationPublicIp,destinationPrivateIp]];
         [messenger sendUdpMessage:messageString toHostWithPublicAddress:requesterPublicIp privateAddress:requesterPrivateIp tag:0];
+    }
+    else {
+        for (id delegate in delegates) {
+            if ([delegate respondsToSelector:@selector(serverDidRecieveMessageWithIdentifier:arguments:)]) {
+                [delegate serverDidRecieveMessageWithIdentifier:identifier arguments:arguments];
+            }
+        }
     }
 }
 
