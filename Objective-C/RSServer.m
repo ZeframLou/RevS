@@ -33,6 +33,8 @@ static NSMutableArray *delegates;
 
 @implementation RSServer
 
+@synthesize started;
+
 + (RSServer *)sharedInstance
 {
     static RSServer *sharedInstance;
@@ -50,11 +52,18 @@ static NSMutableArray *delegates;
         [RSMessenger registerMessageIdentifiers:@[@"BOOTSTRAP",@"JOIN",@"RELAY",@"COMSRVR"] delegate:[RSServer sharedInstance]];
         [RSServer initFiles];
     }
+    [RSServer sharedInstance].started = YES;
 }
 
 + (void)stop
 {
     [messenger closeConnection];
+    [RSServer sharedInstance].started = NO;
+}
+
++ (BOOL)isStarted
+{
+    return [RSServer sharedInstance].started;
 }
 
 + (void)initFiles

@@ -38,6 +38,8 @@
 
 @interface RSServer : NSObject
 
+@property (nonatomic) BOOL started;
+
 /*
   Start the server to handle incoming trasmissions.
 */
@@ -47,5 +49,8 @@
   Stop the server.
 */
 + (void)stop;
+
++ (void)addDelegate:(id)delegate;
++ (BOOL)isStarted;
 
 @end
