@@ -11,8 +11,8 @@ RevS is an open source P2P library for building Peer-to-Peer based apps.
  * [For iOS](https://github.com/theGreatLzbdd/RevSTest-Objective-C)
 
 # What is RevS and how does it concern me?
-Today,most apps/online services still use centralized servers,which is spendy,and it's ugly when it goes down.If you've made one of these,you know what I'm talking about.Refresh a list?Ask the server.Download a file?Server.Send a message?Server again.Ugh.  
-But what else have we got?Peer-to-peer.You've seen it in BitTorrrent,Gnutella.P2P can allow developers to build networks without centralized servers.
+Today,most apps/online services still use centralized servers,which is really spendy,and it's ugly when it goes down.If you've made one,you'd know what I'm talking about.Refresh a list?Ask the server.Download a file?Server.Send a message?Server again.Ugh.  
+But what else have we got?The answer is peer-to-peer.You've seen it in BitTorrrent,Gnutella.P2P can allow developers to build networks without centralized servers.
 It has tons of advantages over centralized networks: **Less building cost,Less maintenance cost,More dynamic,Harder to go down** ,and more.
 
  * For individual developers,it can save butt loads of money,allowing them to innovate better.
