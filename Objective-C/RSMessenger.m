@@ -282,7 +282,7 @@ static NSMutableArray *messageHistory;
     NSString *messageString = [NSData decryptData:data withKey:MESSAGE_CODE];
     NSString *recieverPrivateIP = [messageString substringFromIndex:[messageString rangeOfString:@"|PIP{"].location + 5];
     recieverPrivateIP = [recieverPrivateIP substringToIndex:recieverPrivateIP.length - 1];
-    if ([recieverPrivateIP isEqualToString:[RSUtilities privateIpAddress]]) {
+    if ([recieverPrivateIP isEqualToString:[RSUtilities privateIpAddress]] || [recieverPrivateIP isEqualToString:@"PrivateAddress"]) {
         NSString *messageIdentifier = [RSMessenger identifierOfMessage:messageString];
         NSArray *messageArguments = [RSMessenger argumentsOfMessage:messageString];
         if ([messageIdentifier isEqualToString:@"COMCLNT"]) {

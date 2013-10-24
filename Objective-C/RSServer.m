@@ -47,6 +47,8 @@ static NSMutableArray *delegates;
 + (void)start
 {
     if (!messenger) {
+        [RSPortMapper addMapperWithPort:MESSAGE_PORT];
+        [RSPortMapper start];
         [RSUtilities setNatTier:RSTierNoNatOrNatPmp];
         messenger = [RSMessenger messengerWithPort:MESSAGE_PORT delegate:[RSServer sharedInstance]];
         [RSMessenger registerMessageIdentifiers:@[@"BOOTSTRAP",@"JOIN",@"RELAY",@"COMSRVR"] delegate:[RSServer sharedInstance]];
@@ -57,6 +59,7 @@ static NSMutableArray *delegates;
 
 + (void)stop
 {
+    [RSPortMapper stop];
     [messenger closeConnection];
     [RSServer sharedInstance].started = NO;
 }
@@ -106,7 +109,7 @@ static NSMutableArray *delegates;
         if (clientList.count >= NEIGHBOR_COUNT) {
             while (remaining > 0) {
                 NSString *neighbor = [clientList objectAtIndex:arc4random() % clientList.count];
-                if (![selectedNeighborList containsObject:neighbor]) {
+                if (![selectedNeighborList containsObject:neighbor] && ![neighbor isEqualToString:[NSString stringWithFormat:@"%@|%@,%@|1",deviceID,publicIp,privateIp]]) {
                     [selectedNeighborList addObject:neighbor];
                     remaining--;
                 }

@@ -69,10 +69,10 @@ static BOOL started;
 
 + (void)stop
 {
+    started = NO;
     for (PortMapper *mapper in mappers) {
         [mapper close];
     }
-    started = NO;
 }
 
 + (NSString *)publicAddress
@@ -116,6 +116,13 @@ static BOOL started;
 
 - (void)portMappingChanged:(NSNotification *)aNotification {
     PortMapper *mapper = aNotification.object;
+    if (started == YES && mapper.isMapped == NO) {
+        for (id delegate in delegates) {
+            if ([delegate respondsToSelector:@selector(mapper:didMapWithSuccess:)]) {
+                [delegate mapper:mapper didMapWithSuccess:(mapper.isMapped)];
+            }
+        }
+    }
     if ([RSUtilities natTier] == RSTierNoNatOrNatPmp && mapper.isMapped == NO) {
         //Mapper closed
         for (id delegate in delegates) {

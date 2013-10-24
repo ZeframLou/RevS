@@ -55,6 +55,7 @@
 {
     if ([[RSUtilities publicIpAddress] isEqualToString:[RSUtilities privateIpAddress]]) {
         [RSUtilities setNatTier:RSTierNoNatOrNatPmp];
+        [RSClient sendJoinMessages];
     }
     else
     {

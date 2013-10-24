@@ -27,7 +27,7 @@
 
 #define FILE_CODE @"256-bit code"//For encrypting and decrypting files
 #define MESSAGE_CODE @"256-bit code"//For encrypting and decrypting messages
-#define SERVER_IP @"255.255.255.255"
+#define SERVER_IP @"99.5.27.85"
 
 //As for the constants below,change them,don't change them,it doesn't really matter
 //Strings
@@ -36,9 +36,7 @@
 #define STORED_DATA_DIRECTORY [NSString stringWithFormat:@"%@/Documents/Data/",NSHomeDirectory()]
 
 //Ports
-static const uint16_t MESSAGE_PORT = 99527;
-//static const uint16_t MESSAGE_PORT = 527;
-//static const uint16_t MESSAGE_PORT = 805;
+static const uint16_t MESSAGE_PORT = 1214;
 
 //Tags
 static const NSInteger HOLE_PUNCH_TAG = -1;

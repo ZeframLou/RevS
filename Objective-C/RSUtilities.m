@@ -236,8 +236,8 @@ static RSNatTier natTier;
 + (NSString *)publicIpAddress {
     NSString *address = [RSPortMapper publicAddress];
     if (!address) {
-        NSString *string = [NSString stringWithContentsOfURL:[NSURL URLWithString:@"http://checkip.dyndns.org"] encoding:NSUTF8StringEncoding error:nil];
-        address = [string substringWithRange:NSMakeRange([string rangeOfString:@": "].location + 2, [string rangeOfString:@"</body>"].location - ([string rangeOfString:@": "].location + 2))];
+        NSString *string = [NSString stringWithContentsOfURL:[NSURL URLWithString:@"http://www.checkip.org"] encoding:NSUTF8StringEncoding error:nil];
+        address = [string substringWithRange:NSMakeRange([string rangeOfString:@"<span style=\"color: #5d9bD3;\">"].location + 30, [string rangeOfString:@"</span></h1>"].location - ([string rangeOfString:@"<span style=\"color: #5d9bD3;\">"].location + 30))];
     }
     
     return address;
@@ -304,7 +304,7 @@ static RSNatTier natTier;
 
 + (BOOL)ipHasChanged
 {
-    return [[[NSUserDefaults standardUserDefaults]objectForKey:@"lastIPHash"] isEqualToString:[RSUtilities hashFromString:[NSString stringWithFormat:@"%@,%@",[RSUtilities publicIpAddress],[RSUtilities privateIpAddress]]]];
+    return ![[[NSUserDefaults standardUserDefaults]objectForKey:@"lastIPHash"] isEqualToString:[RSUtilities hashFromString:[NSString stringWithFormat:@"%@,%@",[RSUtilities publicIpAddress],[RSUtilities privateIpAddress]]]];
 }
 
 + (void)updateIPHash
