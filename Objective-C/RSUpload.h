@@ -31,12 +31,12 @@
 /*
  Called after a file is uploaded.
  */
-- (void)didUploadFile:(NSString *)fileName;
+- (void)didUploadFile:(NSString *)fileName toPublicAddress:(NSString *)publicAddress privateAddress:(NSString *)privateAddress;
 
 /*
  Called after an upload request failed.
  */
-- (void)uploadDidFail;
+- (void)uploadDidFail:(NSString *)upload;
 
 @end
 

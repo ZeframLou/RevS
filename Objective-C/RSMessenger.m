@@ -357,7 +357,7 @@ static NSMutableArray *messageHistory;
     }
     dispatch_async(dispatch_get_main_queue(), ^{
         if ([delegate respondsToSelector:@selector(messenger:didNotSendDataWithTag:error:)]) {
-            [delegate messenger:self didNotSendDataWithTag:self.tag error:error];
+            [delegate messenger:self didNotSendMessage:[RSMessenger messageStringFromMessageTag:tag] toPublicAddress:[RSMessenger publicIpFromMessageTag:tag] privateAddress:[RSMessenger privateIpFromMessageTag:tag] tag:self.tag error:error];
         }
     });
 }

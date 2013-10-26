@@ -189,28 +189,41 @@
         NSString *requesterPrivateIP = [arguments objectAtIndex:2];
         NSData *data = [NSData dataWithContentsOfFile:[NSString stringWithFormat:@"%@%@",STORED_DATA_DIRECTORY,fileName]];
         NSString *dataString = [NSData decryptData:data withKey:FILE_CODE];
-        NSString *string = [RSMessenger messageWithIdentifier:@"D_FILE_DATA" arguments:@[fileName,dataString]];
+        NSString *string = [RSMessenger messageWithIdentifier:@"D_FILE_DATA" arguments:@[fileName,[RSUtilities publicIpAddress],[RSUtilities privateIpAddress],dataString]];
         RSMessenger *message = [RSMessenger messengerWithPort:MESSAGE_PORT delegate:self];
         [message sendUdpMessage:string toHostWithPublicAddress:requesterPublicIP privateAddress:requesterPrivateIP tag:0];
     }
     else if ([identifier isEqualToString:@"D_FILE_DATA"]) {
         NSString *fileName = [arguments objectAtIndex:0];
-        NSString *dataString = [arguments objectAtIndex:1];
+        NSString *publicIp = [arguments objectAtIndex:1];
+        NSString *privateIp = [arguments objectAtIndex:2];
+        NSString *dataString = [arguments objectAtIndex:3];
         NSData *data = [NSData encryptString:dataString withKey:FILE_CODE];
         [data writeToFile:[NSString stringWithFormat:@"%@%@",STORED_DATA_DIRECTORY,fileName] atomically:YES];
         for (id delegate in delegates) {
             if ([delegate respondsToSelector:@selector(didDownloadFile:)]) {
-                [delegate didDownloadFile:fileName];
+                [delegate didDownloadFile:fileName fromPublicAddress:publicIp privateAddress:privateIp];
             }
         }
     }
 }
 
-- (void)messenger:(RSMessenger *)messenger didNotSendDataWithTag:(NSInteger)tag error:(NSError *)error
+- (void)messenger:(RSMessenger *)messenger didNotSendMessage:(NSString *)message toPublicAddress:(NSString *)publicAddress privateAddress:(NSString *)privateAddress tag:(NSInteger)tag error:(NSError *)error
 {
-    for (id delegate in delegates) {
-        if ([delegate respondsToSelector:@selector(downloadDidFail)]) {
-            [delegate downloadDidFail];
+    if ([[RSMessenger identifierOfMessage:message] isEqualToString:@"DOWN_REQ"]) {
+        NSString *fileName = [[RSMessenger argumentsOfMessage:message] objectAtIndex:4];
+        for (id delegate in delegates) {
+            if ([delegate respondsToSelector:@selector(downloadDidFail)]) {
+                [delegate downloadDidFail:fileName];
+            }
+        }
+    }
+    else if ([[RSMessenger identifierOfMessage:message] isEqualToString:@"DOWN_FILE"]) {
+        NSString *fileName = [[RSMessenger argumentsOfMessage:message] objectAtIndex:0];
+        for (id delegate in delegates) {
+            if ([delegate respondsToSelector:@selector(downloadDidFail)]) {
+                [delegate downloadDidFail:fileName];
+            }
         }
     }
 }

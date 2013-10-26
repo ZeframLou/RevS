@@ -100,7 +100,7 @@
         [message sendUdpMessage:string toHostWithPublicAddress:requesterPublicIP privateAddress:requesterPrivateIP tag:0];
         for (id delegate in delegates) {
             if ([delegate respondsToSelector:@selector(didUploadFile:)]) {
-                [delegate didUploadFile:fileName];
+                [delegate didUploadFile:fileName toPublicAddress:requesterPublicIP privateAddress:requesterPrivateIP];
             }
         }
     }
@@ -115,7 +115,7 @@
         NSString *messageString = [RSMessenger messageWithIdentifier:@"UP_REQ" arguments:@[fileName,[RSUtilities publicIpAddress],[RSUtilities privateIpAddress],[NSString stringWithFormat:@"%ld",(unsigned long)timeToLive]]];
         //Prevent error
         if ([RSUtilities freeDiskspace] < data.length) {
-            messageString = [RSMessenger messageWithIdentifier:@"UP_REQ" arguments:@[fileName,uploaderPublicIP,uploaderPrivateIP,[NSString stringWithFormat:@"%d",timeToLive + 1]]];
+            messageString = [RSMessenger messageWithIdentifier:@"UP_REQ" arguments:@[fileName,uploaderPublicIP,uploaderPrivateIP,[NSString stringWithFormat:@"%ld",timeToLive + 1]]];
         }
         else
         {
@@ -133,20 +133,17 @@
                 }
             }
         }
-        
-        for (id delegate in delegates) {
-            if ([delegate respondsToSelector:@selector(didUploadFile:)]) {
-                [delegate didUploadFile:fileName];
-            }
-        }
     }
 }
 
-- (void)messenger:(RSMessenger *)messenger didNotSendDataWithTag:(NSInteger)tag error:(NSError *)error
+- (void)messenger:(RSMessenger *)messenger didNotSendMessage:(NSString *)message toPublicAddress:(NSString *)publicAddress privateAddress:(NSString *)privateAddress tag:(NSInteger)tag error:(NSError *)error
 {
-    for (id delegate in delegates) {
-        if ([delegate respondsToSelector:@selector(uploadDidFail)]) {
-            [delegate uploadDidFail];
+    if ([[RSMessenger identifierOfMessage:message] isEqualToString:@"UP_REQ"] || [[RSMessenger identifierOfMessage:message] isEqualToString:@"U_FILE_DATA"]) {
+        NSString *fileName = [[RSMessenger argumentsOfMessage:message] objectAtIndex:0];
+        for (id delegate in delegates) {
+            if ([delegate respondsToSelector:@selector(uploadDidFail)]) {
+                [delegate uploadDidFail:fileName];
+            }
         }
     }
 }

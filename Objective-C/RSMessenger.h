@@ -98,6 +98,6 @@
 /*
   Called if a message was not sent successfully.
 */
-- (void)messenger:(RSMessenger *)messenger didNotSendDataWithTag:(NSInteger)tag error:(NSError *)error;
+- (void)messenger:(RSMessenger *)messenger didNotSendMessage:(NSString *)message toPublicAddress:(NSString *)publicAddress privateAddress:(NSString *)privateAddress tag:(NSInteger)tag error:(NSError *)error;
 
 @end
