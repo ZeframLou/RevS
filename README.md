@@ -7,8 +7,9 @@ RevS is an open source P2P library for building Peer-to-Peer based apps.
  * [Using RevS in your app](https://github.com/theGreatLzbdd/RevS/wiki/Guide-of-using-RevS-in-your-app)
  * [How does RevS work](https://github.com/theGreatLzbdd/RevS/wiki/How-does-RevS-work)
 
-##Test Apps
- * [For iOS](https://github.com/theGreatLzbdd/RevSTest-Objective-C)
+##Apps
+ * [Test app for iOS](https://github.com/theGreatLzbdd/RevS-Test)
+ * [RevS Server for OS X](https://github.com/theGreatLzbdd/RevS-Server)
 
 # What is RevS and how does it concern me?
 Today,most apps/online services still use centralized servers,which is really spendy,and it's ugly when it goes down.If you've made one,you'd know what I'm talking about.Refresh a list?Ask the server.Download a file?Server.Send a message?Server again.Ugh.  
