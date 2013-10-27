@@ -29,7 +29,7 @@
 static NSMutableArray *connectedAddresses;
 static RSNatTier natTier;
 
-@interface RSUtilities () <RSMessengerDelegate>
+@interface RSUtilities ()
 
 @end
 
@@ -201,12 +201,12 @@ static RSNatTier natTier;
 }
 
 + (NSString *)privateIpAddress {
-    NSString *ip;
-    if (TARGET_OS_MAC) {
-        ip = [RSPortMapper privateAddress];
-    } 
-    if (!ip) {
-        ip = @"error";
+    NSString *address;
+    if ([RSPortMapper isStarted]) {
+        address = [RSPortMapper privateAddress];
+    }
+    else {
+        address = @"error";
         struct ifaddrs *interfaces = NULL;
         struct ifaddrs *temp_addr = NULL;
         int success = 0;
@@ -220,7 +220,7 @@ static RSNatTier natTier;
                     // Check if interface is en0 which is the wifi connection on the iPhone
                     if([[NSString stringWithUTF8String:temp_addr->ifa_name] isEqualToString:@"en0"]) {
                         // Get NSString from C String
-                        ip = [NSString stringWithUTF8String:inet_ntoa(((struct sockaddr_in *)temp_addr->ifa_addr)->sin_addr)];
+                        address = [NSString stringWithUTF8String:inet_ntoa(((struct sockaddr_in *)temp_addr->ifa_addr)->sin_addr)];
                     }
                 }
                 temp_addr = temp_addr->ifa_next;
@@ -230,16 +230,18 @@ static RSNatTier natTier;
         freeifaddrs(interfaces);
     }
     
-    return ip;
+    return address;
 }
 
 + (NSString *)publicIpAddress {
-    NSString *address = [RSPortMapper publicAddress];
-    if (!address) {
+    NSString *address;
+    if ([RSPortMapper isStarted]) {
+        address = [RSPortMapper publicAddress];
+    }
+    else {
         NSString *string = [NSString stringWithContentsOfURL:[NSURL URLWithString:@"http://www.checkip.org"] encoding:NSUTF8StringEncoding error:nil];
         address = [string substringWithRange:NSMakeRange([string rangeOfString:@"<span style=\"color: #5d9bD3;\">"].location + 30, [string rangeOfString:@"</span></h1>"].location - ([string rangeOfString:@"<span style=\"color: #5d9bD3;\">"].location + 30))];
     }
-    
     return address;
 }
 
@@ -258,17 +260,6 @@ static RSNatTier natTier;
     }
     return output;
 }
-
-/*+ (NSArray *)listOfHashedFilenames
-{
-    NSArray *fileList = [[NSFileManager defaultManager]contentsOfDirectoryAtPath:STORED_DATA_DIRECTORY error:nil];
-    NSMutableArray *hashedFileList = [NSMutableArray array];
-    for (NSString *fileName in fileList) {
-        NSString *hashedFileName = [RSUtilities hashFromString:fileName];
-        [hashedFileList addObject:hashedFileName];
-    }
-    return hashedFileList;
-}*/
 
 + (NSArray *)listOfFilenames
 {

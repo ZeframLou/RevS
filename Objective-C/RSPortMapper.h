@@ -26,15 +26,6 @@
 
 @class PortMapper;
 
-@protocol RSPortMapperDelegate <NSObject>
-
-@optional
-
-- (void)mapper:(PortMapper *)mapper didMapWithSuccess:(BOOL)success;
-- (void)mapperDidClose:(PortMapper *)mapper;
-
-@end
-
 /*
   A class that use NAT port mapping and UPnP to map ports.
 */
@@ -57,11 +48,22 @@
 + (NSString *)publicAddress;
 + (NSString *)privateAddress;
 
++ (BOOL)isStarted;
+
 + (void)addDelegate:(id)delegate;
 
 /*
   Add a port to map.
 */
 + (void)addMapperWithPort:(UInt16)port;
+
+@end
+
+@protocol RSPortMapperDelegate <NSObject>
+
+@optional
+
+- (void)mapper:(PortMapper *)mapper didMapWithSuccess:(BOOL)success;
+- (void)mapperDidClose:(PortMapper *)mapper;
 
 @end

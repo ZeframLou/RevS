@@ -25,20 +25,7 @@
 
 #import <Foundation/Foundation.h>
 
-@protocol RSUploadDelegate <NSObject>
-
-@optional
-/*
- Called after a file is uploaded.
- */
-- (void)didUploadFile:(NSString *)fileName toPublicAddress:(NSString *)publicAddress privateAddress:(NSString *)privateAddress;
-
-/*
- Called after an upload request failed.
- */
-- (void)uploadDidFail:(NSString *)upload;
-
-@end
+@protocol RSUploadDelegate;
 
 @interface RSUpload : NSObject
 
@@ -58,5 +45,20 @@
 + (void)uploadFile:(NSString *)fileName toPublicAddress:(NSString *)publicAddress privateAddress:(NSString *)privateAddress;
 
 + (void)addDelegate:(id <RSUploadDelegate>)delegate;
+
+@end
+
+@protocol RSUploadDelegate <NSObject>
+
+@optional
+/*
+ Called after a file is uploaded.
+ */
+- (void)didUploadFile:(NSString *)fileName toPublicAddress:(NSString *)publicAddress privateAddress:(NSString *)privateAddress;
+
+/*
+ Called after an upload request failed.
+ */
+- (void)uploadDidFail:(NSString *)upload;
 
 @end

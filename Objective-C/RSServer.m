@@ -29,6 +29,8 @@ static NSMutableArray *delegates;
 
 @interface RSServer () <RSMessengerDelegate>
 
+@property (nonatomic) BOOL started;
+
 @end
 
 @implementation RSServer
@@ -62,6 +64,11 @@ static NSMutableArray *delegates;
     [RSPortMapper stop];
     [messenger closeConnection];
     [RSServer sharedInstance].started = NO;
+}
+
++ (void)listenForMessagesWithIdentifiers:(NSArray *)identifiers
+{
+    [RSMessenger registerMessageIdentifiers:identifiers delegate:[RSServer sharedInstance]];
 }
 
 + (BOOL)isStarted

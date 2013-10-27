@@ -35,10 +35,3 @@
 #import "RSMessenger.h"
 #import "RSPortMapper.h"
 #import "RSServer.h"
-
-enum RSNatTier {
-    RSTierNoNatOrNatPmp = 1,
-    RSTierUdpHolePunching = 2,
-    RSTierRelay = 3
-};
-typedef NSUInteger RSNatTier;

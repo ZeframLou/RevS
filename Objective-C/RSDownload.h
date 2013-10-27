@@ -25,21 +25,7 @@
 
 #import <Foundation/Foundation.h>
 
-@protocol RSDownloadDelegate <NSObject>
-
-@optional
-
-/*
- Called after a file is downloaded.
- */
-- (void)didDownloadFile:(NSString *)fileName fromPublicAddress:(NSString *)publicAddress privateAddress:(NSString *)privateAddress;
-
-/*
- Called after a download request failed.
- */
-- (void)downloadDidFail:(NSString *)fileName;
-
-@end
+@protocol RSDownloadDelegate;
 
 @interface RSDownload : NSObject
 
@@ -59,5 +45,21 @@
 + (void)downloadFile:(NSString *)fileName fromPublicAddress:(NSString *)publicAddress privateAddress:(NSString *)privateAddress;
 
 + (void)addDelegate:(id <RSDownloadDelegate>)delegate;
+
+@end
+
+@protocol RSDownloadDelegate <NSObject>
+
+@optional
+
+/*
+ Called after a file is downloaded.
+ */
+- (void)didDownloadFile:(NSString *)fileName fromPublicAddress:(NSString *)publicAddress privateAddress:(NSString *)privateAddress;
+
+/*
+ Called after a download request failed.
+ */
+- (void)downloadDidFail:(NSString *)fileName;
 
 @end

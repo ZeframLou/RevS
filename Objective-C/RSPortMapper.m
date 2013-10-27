@@ -54,6 +54,7 @@ static BOOL started;
             [mapper waitTillOpened];
             if (mapper.isMapped) {
                 [RSUtilities setNatTier:RSTierNoNatOrNatPmp];
+                started = YES;
             } else {
                 [RSUtilities setNatTier:RSTierUdpHolePunching];
             }
@@ -64,7 +65,6 @@ static BOOL started;
             }
         });
     }
-    started = YES;
 }
 
 + (void)stop
@@ -83,6 +83,11 @@ static BOOL started;
 + (NSString *)privateAddress
 {
     return [PortMapper localAddress];
+}
+
++ (BOOL)isStarted
+{
+    return started;
 }
 
 + (void)addDelegate:(id)delegate
@@ -116,13 +121,6 @@ static BOOL started;
 
 - (void)portMappingChanged:(NSNotification *)aNotification {
     PortMapper *mapper = aNotification.object;
-    if (started == YES && mapper.isMapped == NO) {
-        for (id delegate in delegates) {
-            if ([delegate respondsToSelector:@selector(mapper:didMapWithSuccess:)]) {
-                [delegate mapper:mapper didMapWithSuccess:(mapper.isMapped)];
-            }
-        }
-    }
     if ([RSUtilities natTier] == RSTierNoNatOrNatPmp && mapper.isMapped == NO) {
         //Mapper closed
         for (id delegate in delegates) {

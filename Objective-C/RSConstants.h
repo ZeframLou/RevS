@@ -50,3 +50,10 @@ static const NSInteger INDEX_INC = 10;
 static const NSInteger NEIGHBOR_COUNT = 16;
 static const NSInteger INITIAL_PROB_INDEX = 10;
 static const NSInteger KEEP_ALIVE_INTERVAL = 300;
+
+enum RSNatTier {
+    RSTierNoNatOrNatPmp = 1,
+    RSTierUdpHolePunching = 2,
+    RSTierRelay = 3
+};
+typedef NSUInteger RSNatTier;

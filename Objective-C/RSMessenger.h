@@ -33,6 +33,10 @@
 
 @interface RSMessenger : NSObject
 
+@property (nonatomic) NSInteger tag;
+@property (nonatomic) uint16_t port;
+@property (nonatomic,strong) id <RSMessengerDelegate> delegate;
+
 /*
   Initializes a RSMessenger object with the given port.
 */
@@ -70,7 +74,7 @@
 + (NSArray *)argumentsOfMessage:(NSString *)message;
 
 /*
-  Registers message identifiers so that when a message is recieved,RSMessenger will be able to pass it to the right object.
+  Registers message identifiers so that when a message is recieved,RSMessenger will be able to pass it to the right delegate.
 */
 + (void)registerMessageIdentifiers:(NSArray *)identifiers delegate:(id)delegate;
 

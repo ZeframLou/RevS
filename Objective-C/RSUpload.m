@@ -115,7 +115,7 @@
         NSString *messageString = [RSMessenger messageWithIdentifier:@"UP_REQ" arguments:@[fileName,[RSUtilities publicIpAddress],[RSUtilities privateIpAddress],[NSString stringWithFormat:@"%ld",(unsigned long)timeToLive]]];
         //Prevent error
         if ([RSUtilities freeDiskspace] < data.length) {
-            messageString = [RSMessenger messageWithIdentifier:@"UP_REQ" arguments:@[fileName,uploaderPublicIP,uploaderPrivateIP,[NSString stringWithFormat:@"%ld",timeToLive + 1]]];
+            messageString = [RSMessenger messageWithIdentifier:@"UP_REQ" arguments:@[fileName,uploaderPublicIP,uploaderPrivateIP,[NSString stringWithFormat:@"%d",timeToLive + 1]]];
         }
         else
         {

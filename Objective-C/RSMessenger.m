@@ -30,12 +30,8 @@ static NSMutableArray *messageHistory;
 
 @interface RSMessenger () <GCDAsyncSocketDelegate,GCDAsyncUdpSocketDelegate>
 
-@property (nonatomic) NSInteger tag;
-@property (nonatomic) uint16_t port;
-//@property (nonatomic,strong) GCDAsyncSocket *tcpSocket;
 @property (nonatomic,strong) GCDAsyncUdpSocket *udpSocket;
 @property (nonatomic) RSNatTier remoteNatTier;
-@property (nonatomic,strong) id <RSMessengerDelegate> delegate;
 
 @end
 
@@ -43,12 +39,12 @@ static NSMutableArray *messageHistory;
 
 @synthesize tag,port,udpSocket,remoteNatTier,delegate;
 
+#pragma mark - Initializing
+
 + (RSMessenger *)messengerWithPort:(uint16_t)port delegate:(id <RSMessengerDelegate>)delegate;
 {
     RSMessenger *messenger = [[RSMessenger alloc]init];
     messenger.delegate = delegate;
-    //messenger.tcpSocket = [[GCDAsyncSocket alloc]initWithDelegate:messenger delegateQueue:[RSMessenger delegateQueue]];
-    //[messenger.tcpSocket acceptOnPort:port error:nil];
     messenger.udpSocket = [[GCDAsyncUdpSocket alloc]initWithDelegate:messenger delegateQueue:[RSMessenger delegateQueue]];
     [messenger.udpSocket bindToPort:port error:nil];
     [messenger.udpSocket beginReceiving:nil];
@@ -56,24 +52,15 @@ static NSMutableArray *messageHistory;
     return messenger;
 }
 
-/*- (void)sendTcpMessage:(NSString *)message toHost:(NSString *)host tag:(NSInteger)tag
++ (void)registerMessageIdentifiers:(NSArray *)identifiers delegate:(id)delegate
 {
-    self.tag = tag;
-    messageString = message;
-    host = host;
-    if (![[tcpSocket connectedHost] isEqualToString:host] && ![tcpSocket isConnected]) {
-        [tcpSocket disconnect];
-        NSError *error;
-        [tcpSocket connectToHost:host onPort:port error:&error];
-        if (error) {
-            NSLog(@"%@",error);
-        }
+    if (!registedMessageIdentifiers) {
+        registedMessageIdentifiers = [NSMutableArray array];
     }
-    else
-    {
-        [tcpSocket writeData:[NSData encryptString:messageString withKey:MESSAGE_CODE] withTimeout:30 tag:tag];
-    }
-}*/
+    [registedMessageIdentifiers addObject:[NSDictionary dictionaryWithObjects:@[delegate,identifiers] forKeys:@[@"delegate",@"identifiers"]]];
+}
+
+#pragma mark - Sending messages
 
 - (void)sendUdpMessage:(NSString *)message toHostWithPublicAddress:(NSString *)publicAddress privateAddress:(NSString *)privateAddress tag:(NSInteger)tag
 {
@@ -108,10 +95,14 @@ static NSMutableArray *messageHistory;
     [self sendServerMessage:[RSMessenger messageWithIdentifier:@"RELAY" arguments:@[[[NSString alloc]initWithData:[NSData encryptString:message withKey:MESSAGE_CODE] encoding:NSUTF8StringEncoding],publicIp,privateIp]] toServerAddress:SERVER_IP tag:0];
 }
 
+#pragma mark - Closing
+
 - (void)closeConnection
 {
     [udpSocket closeAfterSending];
 }
+
+#pragma mark - Utilities
 
 + (NSString *)messageWithIdentifier:(NSString *)identifier arguments:(NSArray *)arguments
 {
@@ -142,25 +133,6 @@ static NSMutableArray *messageHistory;
     argumentsString = [argumentsString substringToIndex:[argumentsString rangeOfString:@"}|PIP{"].location];
     NSArray *arguments = [argumentsString componentsSeparatedByString:@"[;]"];
     return arguments;
-}
-
-+ (void)registerMessageIdentifiers:(NSArray *)identifiers delegate:(id)delegate
-{
-    if (!registedMessageIdentifiers) {
-        registedMessageIdentifiers = [NSMutableArray array];
-    }
-    [registedMessageIdentifiers addObject:[NSDictionary dictionaryWithObjects:@[delegate,identifiers] forKeys:@[@"delegate",@"identifiers"]]];
-}
-
-+ (void)addMessageWithRemotePublicAddress:(NSString *)publicIp privateAddress:(NSString *)privateIp message:(NSString *)message delegate:(id)delegate socket:(GCDAsyncUdpSocket *)sock
-{
-    if (!messageHistory) {
-        messageHistory = [NSMutableArray array];
-    }
-    NSDictionary *dict = [NSDictionary dictionaryWithObjects:@[publicIp,privateIp,message,delegate,sock] forKeys:@[@"publicIp",@"privateIp",@"message",@"delegate",@"socket"]];
-    if (![messageHistory containsObject:dict]) {
-        [messageHistory addObject:dict];
-    }
 }
 
 + (NSString *)publicIpFromMessageTag:(NSInteger)tag
@@ -211,51 +183,18 @@ static NSMutableArray *messageHistory;
     return queue;
 }
 
-/*#pragma mark - GCDAsyncSocketDelegate
+#pragma mark - Others
 
-- (void)socket:(GCDAsyncSocket *)sock didConnectToHost:(NSString *)host port:(uint16_t)port
++ (void)addMessageWithRemotePublicAddress:(NSString *)publicIp privateAddress:(NSString *)privateIp message:(NSString *)message delegate:(id)delegate socket:(GCDAsyncUdpSocket *)sock
 {
-    [sock writeData:[NSData encryptString:messageString withKey:MESSAGE_CODE] withTimeout:30 tag:tag];
-}
-
-- (void)socket:(GCDAsyncSocket *)sock didAcceptNewSocket:(GCDAsyncSocket *)newSocket
-{
-    tcpSocket.delegate = self;
-    tcpSocket.delegateQueue = [RSMessenger delegateQueue];
-    NSError *error;
-    if (error) {
-        NSLog(@"%@",error);
+    if (!messageHistory) {
+        messageHistory = [NSMutableArray array];
     }
-    [tcpSocket readDataWithTimeout:-1 tag:0];
+    NSDictionary *dict = [NSDictionary dictionaryWithObjects:@[publicIp,privateIp,message,delegate,sock] forKeys:@[@"publicIp",@"privateIp",@"message",@"delegate",@"socket"]];
+    if (![messageHistory containsObject:dict]) {
+        [messageHistory addObject:dict];
+    }
 }
-
-- (void)socket:(GCDAsyncSocket *)sock didReadData:(NSData *)data withTag:(long)tag
-{
-    dispatch_async(dispatch_get_main_queue(), ^{
-        NSString *messageString = [NSData decryptData:data withKey:MESSAGE_CODE];
-        messageString = [messageString substringToIndex:messageString.length - 1];
-        NSString *messageIdentifier = [RSMessenger identifierOfMessage:messageString];
-        NSArray *messageArguments = [RSMessenger argumentsOfMessage:messageString];
-        for (id delegate in delegates) {
-            if ([delegate respondsToSelector:@selector(messenger:didRecieveMessageWithIdentifier:arguments:tag:)]) {
-                [delegate messenger:self didRecieveMessageWithIdentifier:messageIdentifier arguments:messageArguments tag:tag];
-            }
-        }
-    });
-    [tcpSocket readDataWithTimeout:-1 tag:0];
-}
-
-- (void)socket:(GCDAsyncSocket *)sock didWriteDataWithTag:(long)tag
-{
-    dispatch_async(dispatch_get_main_queue(), ^{
-        for (id delegate in delegates) {
-            if ([delegate respondsToSelector:@selector(messenger:didWriteDataWithTag:)]) {
-                [delegate messenger:self didWriteDataWithTag:tag];
-            }
-        }
-    });
-    [tcpSocket readDataWithTimeout:-1 tag:0];
-}*/
 
 #pragma mark - GCDAsyncUdpSocketDelegate
 
