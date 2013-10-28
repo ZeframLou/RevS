@@ -13,7 +13,7 @@ RevS is an open source P2P library for building Peer-to-Peer based apps.
 
 ##What is RevS and how does it concern me?
 Today,most apps/online services still use centralized servers,which is really spendy,and it's ugly when it goes down.If you've made one,you'd know what I'm talking about.Refresh a list?Ask the server.Download a file?Server.Send a message?Server again.Ugh.  
-But what else have we got?The answer is peer-to-peer.You've seen it in BitTorrrent,Gnutella.P2P can allow developers to build networks without centralized servers.
+But what else have we got?The answer is peer-to-peer.You've seen it in BitTorrrent,Gnutella.P2P allows developers to build networks without centralized servers.
 It has tons of advantages over centralized networks: **Less building cost,Less maintenance cost,More dynamic,Harder to go down** ,and more.
 
  * For individual developers,it can save butt loads of money,allowing them to innovate better.
@@ -22,7 +22,7 @@ It has tons of advantages over centralized networks: **Less building cost,Less m
 
 RevS can dramatically reduce the costs for online service developers.
 
-##A different angle
+##A different edge
 Most P2P applications today are only for sharing files,but we do not recommend you to build another one of them,because P2P is so much more than just fiddling with files.You see,a P2P app is capable of doing most of what a server-client app can do,and a lot better at it.RevS could replace the old networking part in server-client apps,and it's also good for building new kinds of apps with P2P logics.
 
 ##Easy to learn,easy to use
