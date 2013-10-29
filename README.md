@@ -20,7 +20,7 @@ It has tons of advantages over centralized networks: **Less building cost,Less m
  * For enterprises,they can throw away those gigantic servers,and keep only one or two small servers.
  * For users,adopting RevS means they can use the online services even when the servers are down.Amazing.  
 
-RevS can dramatically reduce the costs for online service developers.
+RevS can dramatically reduce the costs for developers.
 
 ##A different edge
 Most P2P applications today are only for sharing files,but we do not recommend you to build another one of them,because P2P is so much more than just fiddling with files.You see,a P2P app is capable of doing most of what a server-client app can do,and a lot better at it.RevS could replace the old networking part in server-client apps,and it's also good for building new kinds of apps with P2P logics.
