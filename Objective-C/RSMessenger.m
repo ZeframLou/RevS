@@ -67,7 +67,7 @@ static NSMutableArray *messageHistory;
     self.tag = tag;
     message = [message stringByReplacingOccurrencesOfString:@"PrivateAddress" withString:privateAddress];
     [RSMessenger addMessageWithRemotePublicAddress:publicAddress privateAddress:privateAddress message:message delegate:delegate socket:udpSocket];
-    NSInteger messageTag = [messageHistory indexOfObject:[NSDictionary dictionaryWithObjects:@[publicAddress,privateAddress,message,delegate,udpSocket] forKeys:@[@"publicIp",@"privateIp",@"message",@"delegate",@"socket"]]];
+    NSInteger messageTag = [messageHistory indexOfObject:[NSDictionary dictionaryWithObjects:@[publicAddress,privateAddress,message,delegate] forKeys:@[@"publicIp",@"privateIp",@"message",@"delegate"]]];
     if (![[RSUtilities connectedAddresses]containsObject:[NSString stringWithFormat:@"%@,%@",publicAddress,privateAddress]] && ([RSUtilities natTier] == RSTierUdpHolePunching || remoteNatTier == RSTierUdpHolePunching)) {
         [udpSocket sendData:[NSData encryptString:[RSMessenger messageWithIdentifier:@"COMSRVR" arguments:@[[RSUtilities publicIpAddress],[RSUtilities privateIpAddress],publicAddress,privateAddress]] withKey:MESSAGE_CODE] toHost:SERVER_IP port:port withTimeout:30 tag:messageTag];
     }
@@ -159,12 +159,6 @@ static NSMutableArray *messageHistory;
     return [dict objectForKey:@"delegate"];
 }
 
-+ (NSString *)socketFromMessageTag:(NSInteger)tag
-{
-    NSDictionary *dict = [messageHistory objectAtIndex:tag];
-    return [dict objectForKey:@"socket"];
-}
-
 + (dispatch_queue_t)delegateQueue
 {
     static dispatch_queue_t queue;
@@ -190,7 +184,7 @@ static NSMutableArray *messageHistory;
     if (!messageHistory) {
         messageHistory = [NSMutableArray array];
     }
-    NSDictionary *dict = [NSDictionary dictionaryWithObjects:@[publicIp,privateIp,message,delegate,sock] forKeys:@[@"publicIp",@"privateIp",@"message",@"delegate",@"socket"]];
+    NSDictionary *dict = [NSDictionary dictionaryWithObjects:@[publicIp,privateIp,message,delegate,sock] forKeys:@[@"publicIp",@"privateIp",@"message",@"delegate"]];
     if (![messageHistory containsObject:dict]) {
         [messageHistory addObject:dict];
     }
