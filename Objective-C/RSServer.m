@@ -2,7 +2,7 @@
 //  RSServer.m
 //  RevS
 //
-//  Created by lzbdd on 13-9-29.
+//  Created by Zebang Liu on 13-9-29.
 //  Copyright (c) 2013年 Zebang Liu. All rights reserved.
 //  Contact: the.great.lzbdd@gmail.com
 /*

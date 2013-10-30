@@ -2,7 +2,7 @@
 //  RSPortMapper.h
 //  RevS
 //
-//  Created by lzbdd on 13-9-15.
+//  Created by Zebang Liu on 13-9-15.
 //  Copyright (c) 2013年 Zebang Liu. All rights reserved.
 //  Contact: the.great.lzbdd@gmail.com
 /*
