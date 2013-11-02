@@ -4,7 +4,7 @@ RevS
 RevS is an open source P2P library for building Peer-to-Peer based apps.
 
 ###Wiki
- * [Using RevS in your app](https://github.com/theGreatLzbdd/RevS/wiki/Guide-of-using-RevS-in-your-app)
+ * [Guide of using RevS](https://github.com/theGreatLzbdd/RevS/wiki/Guide-of-using-RevS)
  * [How does RevS work](https://github.com/theGreatLzbdd/RevS/wiki/How-does-RevS-work)
 
 ###Apps
