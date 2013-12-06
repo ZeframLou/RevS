@@ -3,7 +3,7 @@
 //  RevS
 //
 //  Created by Zebang Liu on 13-8-1.
-//  Copyright (c) 2013年 Zebang Liu. All rights reserved.
+//  Copyright (c) 2013 Zebang Liu. All rights reserved.
 //  Contact: the.great.lzbdd@gmail.com
 /*
  This file is part of RevS.
@@ -201,7 +201,7 @@
         NSData *data = [NSData encryptString:dataString withKey:FILE_CODE];
         [data writeToFile:[NSString stringWithFormat:@"%@%@",STORED_DATA_DIRECTORY,fileName] atomically:YES];
         for (id delegate in delegates) {
-            if ([delegate respondsToSelector:@selector(didDownloadFile:)]) {
+            if ([delegate respondsToSelector:@selector(didDownloadFile:fromPublicAddress:privateAddress:)]) {
                 [delegate didDownloadFile:fileName fromPublicAddress:publicIp privateAddress:privateIp];
             }
         }
@@ -213,7 +213,7 @@
     if ([[RSMessenger identifierOfMessage:message] isEqualToString:@"DOWN_REQ"]) {
         NSString *fileName = [[RSMessenger argumentsOfMessage:message] objectAtIndex:4];
         for (id delegate in delegates) {
-            if ([delegate respondsToSelector:@selector(downloadDidFail)]) {
+            if ([delegate respondsToSelector:@selector(downloadDidFail:)]) {
                 [delegate downloadDidFail:fileName];
             }
         }
@@ -221,7 +221,7 @@
     else if ([[RSMessenger identifierOfMessage:message] isEqualToString:@"DOWN_FILE"]) {
         NSString *fileName = [[RSMessenger argumentsOfMessage:message] objectAtIndex:0];
         for (id delegate in delegates) {
-            if ([delegate respondsToSelector:@selector(downloadDidFail)]) {
+            if ([delegate respondsToSelector:@selector(downloadDidFail:)]) {
                 [delegate downloadDidFail:fileName];
             }
         }

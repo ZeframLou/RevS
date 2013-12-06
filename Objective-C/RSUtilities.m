@@ -3,7 +3,7 @@
 //  RevS
 //
 //  Created by Zebang Liu on 13-8-1.
-//  Copyright (c) 2013年 Zebang Liu. All rights reserved.
+//  Copyright (c) 2013 Zebang Liu. All rights reserved.
 //  Contact: the.great.lzbdd@gmail.com
 /*
  This file is part of RevS.
@@ -239,10 +239,37 @@ static RSNatTier natTier;
         address = [RSPortMapper publicAddress];
     }
     else {
-        NSString *string = [NSString stringWithContentsOfURL:[NSURL URLWithString:@"http://www.checkip.org"] encoding:NSUTF8StringEncoding error:nil];
-        address = [string substringWithRange:NSMakeRange([string rangeOfString:@"<span style=\"color: #5d9bD3;\">"].location + 30, [string rangeOfString:@"</span></h1>"].location - ([string rangeOfString:@"<span style=\"color: #5d9bD3;\">"].location + 30))];
+        if ([RSUtilities checkNetWorkIsOk]) {
+            NSString *string = [NSString stringWithContentsOfURL:[NSURL URLWithString:@"http://www.checkip.org"] encoding:NSUTF8StringEncoding error:nil];
+            address = [string substringWithRange:NSMakeRange([string rangeOfString:@"<span style=\"color: #5d9bD3;\">"].location + 30, [string rangeOfString:@"</span></h1>"].location - ([string rangeOfString:@"<span style=\"color: #5d9bD3;\">"].location + 30))];
+        }
     }
     return address;
+}
+
++ (BOOL) checkNetWorkIsOk{
+    struct sockaddr_in zeroAddress;
+    bzero(&zeroAddress, sizeof(zeroAddress));
+    zeroAddress.sin_len = sizeof(zeroAddress);
+    zeroAddress.sin_family = AF_INET;
+    
+    SCNetworkReachabilityRef defaultRouteReachability = SCNetworkReachabilityCreateWithAddress(NULL, (struct sockaddr *)&zeroAddress);
+    SCNetworkReachabilityFlags flags;
+    
+    BOOL didRetrieveFlags = SCNetworkReachabilityGetFlags(defaultRouteReachability, &flags);
+    CFRelease(defaultRouteReachability);
+    
+    if (!didRetrieveFlags) {
+        return NO;
+    }
+    
+    BOOL isReachable = flags & kSCNetworkFlagsReachable;
+    BOOL needsConnection = flags & kSCNetworkFlagsConnectionRequired;
+    // = flags & kSCNetworkReachabilityFlagsIsWWAN;
+    BOOL nonWifi = flags & kSCNetworkReachabilityFlagsTransientConnection;
+    BOOL moveNet = flags & kSCNetworkReachabilityFlagsIsDirect;
+    
+    return ((isReachable && !needsConnection) || nonWifi || moveNet) ? YES : NO;
 }
 
 + (NSString *)hashFromString:(NSString *)string

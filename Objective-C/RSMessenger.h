@@ -3,7 +3,7 @@
 //  RevSTest
 //
 //  Created by Zebang Liu on 13-8-1.
-//  Copyright (c) 2013年 Zebang Liu. All rights reserved.
+//  Copyright (c) 2013 Zebang Liu. All rights reserved.
 //  Contact: the.great.lzbdd@gmail.com
 /*
  This file is part of RevS.
@@ -52,6 +52,16 @@
   Send a message to the server.The difference between this method and sendUdpMethod:toHost:tag: is that this method doesn't use udp hole punching.
 */
 - (void)sendServerMessage:(NSString *)message toServerAddress:(NSString *)serverAddress tag:(NSInteger)tag;
+
+/*
+  Send a message to all contacts.
+*/
+- (void)sendMessageToAllContacts:(NSString *)message;
+
+/*
+  Send a message to contacts with the highest probability values.
+*/
+- (void)sendMessage:(NSString *)message toBestContacts:(NSUInteger)contactcount;
 
 /*
   Close all of the messenger's connections.Note:if the messenger is sending data when you call this method,the connection will be closed after the data has been sent.

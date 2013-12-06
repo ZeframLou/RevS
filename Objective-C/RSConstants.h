@@ -3,7 +3,7 @@
 //  RevS
 //
 //  Created by Zebang Liu on 13-8-1.
-//  Copyright (c) 2013年 Zebang Liu. All rights reserved.
+//  Copyright (c) 2013 Zebang Liu. All rights reserved.
 //  Contact: the.great.lzbdd@gmail.com
 /*
  This file is part of RevS.
@@ -31,9 +31,15 @@
 
 //As for the constants below,change them,don't change them,it doesn't really matter
 //Strings
+#ifdef TARGET_OS_MAC
+#define IP_LIST_PATH [NSString stringWithFormat:@"%@/ipList",NSHomeDirectory()]
+#define PROB_INDEX_PATH [NSString stringWithFormat:@"%@/probIndex",NSHomeDirectory()]
+#define STORED_DATA_DIRECTORY [NSString stringWithFormat:@"%@/Documents/",NSHomeDirectory()]
+#elif TARGET_OS_IOS
 #define IP_LIST_PATH [NSString stringWithFormat:@"%@/Documents/ipList",NSHomeDirectory()]
 #define PROB_INDEX_PATH [NSString stringWithFormat:@"%@/Documents/probIndex",NSHomeDirectory()]
 #define STORED_DATA_DIRECTORY [NSString stringWithFormat:@"%@/Documents/Data/",NSHomeDirectory()]
+#endif
 
 //Ports
 static const uint16_t MESSAGE_PORT = 1214;
@@ -45,7 +51,7 @@ static const NSInteger HOLE_PUNCH_TAG = -1;
 static const NSInteger TTL = 6;//Time to live
 static const NSInteger K = 8;//Number of neighbors to contact
 static const NSInteger K_NEIGHBOR = 2;//K value applied on your neighbors during a search
-static const NSInteger K_UPLOAD = 2;//K value during upload
+static const NSInteger K_UPLOAD = 8;//K value during upload
 static const NSInteger INDEX_INC = 10;
 static const NSInteger NEIGHBOR_COUNT = 16;
 static const NSInteger INITIAL_PROB_INDEX = 10;
